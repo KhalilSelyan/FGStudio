@@ -21,7 +21,7 @@ import { Theme } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { Immutable } from "immer";
 // eslint-disable-next-line no-restricted-imports
-import { first, isEqual, get, last } from "lodash";
+import { first, isEqual, get, last, padStart } from "lodash";
 import { useState, useCallback, useMemo, useEffect } from "react";
 import ReactHoverObserver from "react-hover-observer";
 import Tree from "react-json-tree";
@@ -280,10 +280,12 @@ function RawMessages(props: Props) {
       constantName,
       label,
       itemValue,
+      keyPath,
     }: {
       constantName: string | undefined;
       label: string;
       itemValue: unknown;
+      keyPath: ReadonlyArray<number | string>;
     }): { arrLabel: string; itemLabel: string } => {
       let itemLabel = label;
       if (typeof itemValue === "bigint") {
@@ -302,6 +304,11 @@ function RawMessages(props: Props) {
       if (constantName != undefined) {
         itemLabel = `${itemLabel} (${constantName})`;
       }
+
+      if (keyPath[0] === "nsec" && typeof itemValue === "number") {
+        itemLabel = padStart(itemLabel, 9, "0");
+      }
+
       return { arrLabel, itemLabel };
     },
     [],
@@ -310,7 +317,12 @@ function RawMessages(props: Props) {
   const renderDiffLabel = useCallback(
     (label: string, itemValue: unknown) => {
       let constantName: string | undefined;
-      const { arrLabel, itemLabel } = getValueLabels({ constantName, label, itemValue });
+      const { arrLabel, itemLabel } = getValueLabels({
+        constantName,
+        label,
+        itemValue,
+        keyPath: [],
+      });
       return (
         <Value
           arrLabel={arrLabel}
@@ -363,7 +375,13 @@ function RawMessages(props: Props) {
             }
           }
           const basePath = queriedData[lastKeyPath]?.path ?? "";
-          const { arrLabel, itemLabel } = getValueLabels({ constantName, label, itemValue });
+          const { arrLabel, itemLabel } = getValueLabels({
+            constantName,
+            label,
+            itemValue,
+            keyPath,
+          });
+
           return (
             <Value
               arrLabel={arrLabel}
