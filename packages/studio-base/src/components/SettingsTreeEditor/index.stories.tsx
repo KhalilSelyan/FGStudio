@@ -43,6 +43,7 @@ const BasicSettings: SettingsTreeRoots = {
       { type: "action", id: "reset-values", label: "Reset values" },
     ],
     fields: {
+      emptyField: undefined,
       numberWithPrecision: {
         input: "number",
         label: "Number with precision",
@@ -62,7 +63,9 @@ const BasicSettings: SettingsTreeRoots = {
         error: "This field has an error message that should be displayed to the user",
       },
     },
-    children: {},
+    children: {
+      emptyChild: undefined,
+    },
   },
   complex_inputs: {
     label: "Complex Inputs",
@@ -140,6 +143,7 @@ For ROS users, we also support package:// URLs
       },
     },
   },
+  empty: undefined,
 };
 
 const DisabledSettings: SettingsTreeRoots = {
@@ -232,41 +236,41 @@ const ReadonlySettings: SettingsTreeRoots = {
         label: "Autocomplete",
         items: ["one", "two"],
         value: "one",
-        readOnly: true,
+        readonly: true,
       },
       boolean: {
         input: "boolean",
         label: "Boolean",
-        readOnly: true,
+        readonly: true,
       },
       gradient: {
         input: "gradient",
         label: "Gradient",
         value: ["#ffffff", "#000000"],
-        readOnly: true,
+        readonly: true,
       },
       messagePath: {
         input: "messagepath",
         label: "Message Path",
-        readOnly: true,
+        readonly: true,
       },
       number: {
         input: "number",
         label: "Number",
         value: 123,
-        readOnly: true,
+        readonly: true,
       },
       rgb: {
         input: "rgb",
         label: "RGB",
         value: "#0000ff",
-        readOnly: true,
+        readonly: true,
       },
       rgba: {
         input: "rgba",
         label: "RGBA",
         value: "#0000ff88",
-        readOnly: true,
+        readonly: true,
       },
       select: {
         input: "select",
@@ -276,26 +280,26 @@ const ReadonlySettings: SettingsTreeRoots = {
           { label: "Two", value: "two" },
         ],
         value: "one",
-        readOnly: true,
+        readonly: true,
       },
       text: {
         input: "string",
         label: "Text",
         value: "text",
-        readOnly: true,
+        readonly: true,
       },
       toggle: {
         input: "toggle",
         label: "Toggle",
         value: "One",
         options: ["One", "Two"],
-        readOnly: true,
+        readonly: true,
       },
       vec3: {
         input: "vec3",
         label: "Vec3",
         value: [1, 2, 3],
-        readOnly: true,
+        readonly: true,
       },
     },
     children: {},
