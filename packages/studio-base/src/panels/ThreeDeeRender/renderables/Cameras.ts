@@ -60,22 +60,18 @@ export type CameraInfoUserData = BaseUserData & {
   lines: RenderableLineList | undefined;
 };
 
-export class CameraInfoRenderable extends Renderable<CameraInfoUserData> {}
+export class CameraInfoRenderable extends Renderable<CameraInfoUserData> {
+  override dispose(): void {
+    this.userData.lines?.dispose();
+    super.dispose();
+  }
+}
 
 export class Cameras extends SceneExtension<CameraInfoRenderable> {
   constructor(renderer: Renderer) {
     super("foxglove.Cameras", renderer);
 
     renderer.addDatatypeSubscriptions(CAMERA_INFO_DATATYPES, this.handleCameraInfo);
-  }
-
-  override dispose(): void {
-    for (const renderable of this.renderables.values()) {
-      renderable.userData.cameraModel = undefined;
-      renderable.userData.lines?.dispose();
-      renderable.userData.lines = undefined;
-    }
-    super.dispose();
   }
 
   override settingsNodes(): SettingsTreeEntry[] {

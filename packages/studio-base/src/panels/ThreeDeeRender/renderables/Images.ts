@@ -67,7 +67,14 @@ export type ImageUserData = BaseUserData & {
   mesh: THREE.Mesh | undefined;
 };
 
-export class ImageRenderable extends Renderable<ImageUserData> {}
+export class ImageRenderable extends Renderable<ImageUserData> {
+  override dispose(): void {
+    this.userData.texture?.dispose();
+    this.userData.material?.dispose();
+    this.userData.geometry?.dispose();
+    super.dispose();
+  }
+}
 
 export class Images extends SceneExtension<ImageRenderable> {
   cameraInfoTopics = new Set<string>();
@@ -78,20 +85,6 @@ export class Images extends SceneExtension<ImageRenderable> {
     renderer.addDatatypeSubscriptions(IMAGE_DATATYPES, this.handleRawImage);
     renderer.addDatatypeSubscriptions(COMPRESSED_IMAGE_DATATYPES, this.handleCompressedImage);
     renderer.addDatatypeSubscriptions(CAMERA_INFO_DATATYPES, this.handleCameraInfo);
-  }
-
-  override dispose(): void {
-    for (const renderable of this.renderables.values()) {
-      renderable.userData.texture?.dispose();
-      renderable.userData.material?.dispose();
-      renderable.userData.geometry?.dispose();
-      renderable.userData.texture = undefined;
-      renderable.userData.material = undefined;
-      renderable.userData.geometry = undefined;
-      renderable.userData.mesh = undefined;
-    }
-
-    super.dispose();
   }
 
   override settingsNodes(): SettingsTreeEntry[] {
@@ -341,60 +334,6 @@ type RawImageOptions = {
 };
 
 const tempColor = { r: 0, g: 0, b: 0, a: 0 };
-
-// class ImagesOld extends THREE.Object3D {
-//   renderer: Renderer;
-//   imagesByTopic = new Map<string, ImageRenderable>();
-//   cameraInfoTopics = new Set<string>();
-
-//   constructor(renderer: Renderer) {
-//     super();
-//     this.renderer = renderer;
-
-//     renderer.setSettingsNodeProvider(LayerType.Image, (topicConfig, topic) => {
-//       const cur = topicConfig as Partial<LayerSettingsImage>;
-
-//       // Build a list of all CameraInfo topics
-//       const cameraInfoOptions: Array<{ label: string; value: string }> = [];
-//       for (const cameraInfoTopic of this.cameraInfoTopics) {
-//         if (cameraInfoTopicMatches(topic.name, cameraInfoTopic)) {
-//           cameraInfoOptions.push({ label: cameraInfoTopic, value: cameraInfoTopic });
-//         }
-//       }
-
-//       // prettier-ignore
-//       const fields: SettingsTreeFields = {
-//         cameraInfoTopic: { label: "Camera Info", input: "select", options: cameraInfoOptions, value: cur.cameraInfoTopic },
-//         distance: { label: "Distance", input: "number", value: cur.distance, placeholder: String(DEFAULT_DISTANCE), step: 0.1 },
-//         color: { label: "Color", input: "rgba", value: cur.color },
-//       };
-
-//       return { icon: "ImageProjection", fields };
-//     });
-//   }
-
-//   // addCameraInfoMessage(topic: string, _cameraInfo: CameraInfo): void {
-//   //   // const updated = !this.cameraInfoTopics.has(topic);
-//   //   this.cameraInfoTopics.add(topic);
-
-//   //   const renderable = this.imagesByTopic.get(topic);
-//   //   if (renderable) {
-//   //     const { image, settings } = renderable.userData;
-//   //     this._updateImageRenderable(renderable, image, settings);
-//   //   }
-
-//   //   // if (updated) {
-//   //   //   this.renderer.emit("settingsTreeChange", { path: ["topics"] });
-//   //   // }
-//   // }
-
-//   // setTopicSettings(topic: string, settings: Partial<LayerSettingsImage>): void {
-//   //   const renderable = this.imagesByTopic.get(topic);
-//   //   if (renderable) {
-//   //     this._updateImageRenderable(renderable, renderable.userData.image, settings);
-//   //   }
-//   // }
-// }
 
 function tryCreateMesh(renderable: ImageRenderable, renderer: Renderer): void {
   const { topic, mesh, geometry, material } = renderable.userData;

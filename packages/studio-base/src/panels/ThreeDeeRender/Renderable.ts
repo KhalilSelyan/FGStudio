@@ -30,6 +30,6 @@ export class Renderable<TUserData extends BaseUserData> extends THREE.Object3D {
   }
 
   dispose(): void {
-    //
+    this.children.length = 0;
   }
 }

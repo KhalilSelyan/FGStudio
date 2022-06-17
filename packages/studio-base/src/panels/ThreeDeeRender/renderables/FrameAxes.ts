@@ -55,7 +55,15 @@ export type FrameAxisUserData = BaseUserData & {
   parentLine?: Line2;
 };
 
-export class FrameAxisRenderable extends Renderable<FrameAxisUserData> {}
+export class FrameAxisRenderable extends Renderable<FrameAxisUserData> {
+  override dispose(): void {
+    releaseStandardMaterial(this.renderer.materialCache);
+    this.userData.shaftMesh.dispose();
+    this.userData.headMesh.dispose();
+    this.renderer.labels.removeById(`tf:${this.userData.frameId}`);
+    super.dispose();
+  }
+}
 
 export class FrameAxes extends SceneExtension<FrameAxisRenderable> {
   private static shaftLod: DetailLevel | undefined;
@@ -84,17 +92,8 @@ export class FrameAxes extends SceneExtension<FrameAxisRenderable> {
 
   override dispose(): void {
     this.renderer.off("transformTreeUpdated", this.handleTransformTreeUpdated);
-
-    for (const renderable of this.renderables.values()) {
-      releaseStandardMaterial(this.renderer.materialCache);
-      renderable.userData.shaftMesh.dispose();
-      renderable.userData.headMesh.dispose();
-      this.renderer.labels.removeById(`tf:${renderable.userData.frameId}`);
-      renderable.children.length = 0;
-    }
     this.lineMaterial.dispose();
     releaseLinePickingMaterial(PICKING_LINE_SIZE, false, this.renderer.materialCache);
-
     super.dispose();
   }
 

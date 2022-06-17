@@ -42,6 +42,18 @@ export function normalizeByteArray(byteArray: unknown): Uint8Array {
   }
 }
 
+export function normalizeInt8Array(int8Array: unknown): Int8Array {
+  if (int8Array == undefined) {
+    return new Int8Array(0);
+  } else if (int8Array instanceof Int8Array) {
+    return int8Array;
+  } else if (Array.isArray(int8Array) || int8Array instanceof ArrayBuffer) {
+    return new Int8Array(int8Array);
+  } else {
+    return new Int8Array(0);
+  }
+}
+
 export function normalizeImageData(data: unknown): Int8Array | Uint8Array {
   if (data == undefined) {
     return new Uint8Array(0);
