@@ -656,7 +656,10 @@ function RawMessages(props: Props) {
           {diffEnabled && (
             <div className={classes.diff}>
               <Select
+                variant="filled"
+                size="small"
                 title="Diff method"
+                value={diffMethod}
                 onChange={(event: SelectChangeEvent) =>
                   saveConfig({
                     diffMethod: event.target.value as RawMessagesPanelConfig["diffMethod"],
