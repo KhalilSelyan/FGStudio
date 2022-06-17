@@ -6,7 +6,7 @@ import { SRGBToLinear } from "three/src/math/ColorManagement";
 import { clamp } from "three/src/math/MathUtils";
 import tinycolor from "tinycolor2";
 
-import { approxEquals, uint8Equals } from "./math";
+import { approxEquals, lerp, uint8Equals } from "./math";
 import { ColorRGB, ColorRGBA } from "./ros";
 
 export { SRGBToLinear } from "three/src/math/ColorManagement";
@@ -73,4 +73,22 @@ export function rgbaEqual(a: ColorRGBA, b: ColorRGBA): boolean {
     uint8Equals(a.b, b.b) &&
     approxEquals(a.a, b.a)
   );
+}
+
+/**
+ * Computes a gradient step from colors `a` to `b` using pre-multiplied alpha to
+ * match CSS linear gradients.
+ */
+export function rgbaGradient(output: ColorRGBA, a: ColorRGBA, b: ColorRGBA, t: number): void {
+  const aR = a.r * a.a;
+  const aG = a.g * a.a;
+  const aB = a.b * a.a;
+  const bR = b.r * b.a;
+  const bG = b.g * b.a;
+  const bB = b.b * b.a;
+
+  output.r = aR + (bR - aR) * t;
+  output.g = aG + (bG - aG) * t;
+  output.b = aB + (bB - aB) * t;
+  output.a = lerp(a.a, b.a, t);
 }

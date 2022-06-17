@@ -7,40 +7,31 @@ import * as THREE from "three";
 import { toNanoSec } from "@foxglove/rostime";
 import { Topic } from "@foxglove/studio";
 import {
+  SettingsTreeAction,
   SettingsTreeFields,
   SettingsTreeNode,
 } from "@foxglove/studio-base/components/SettingsTreeEditor/types";
 
 import { DynamicBufferGeometry } from "../DynamicBufferGeometry";
 import { MaterialCache, PointCloudColor } from "../MaterialCache";
+import { BaseUserData, Renderable } from "../Renderable";
 import { Renderer } from "../Renderer";
+import { RawMessage, RawMessageEvent, SceneExtension } from "../SceneExtension";
+import { SettingsTreeEntry, SettingsTreeNodeWithActionHandler } from "../SettingsManager";
 import { rgbaToCssString, stringToRgba } from "../color";
-import { PointCloud2, PointFieldType } from "../ros";
-import { LayerSettings, LayerSettingsPointCloud2, LayerType } from "../settings";
-import { makePose, Pose } from "../transforms/geometry";
-import { updatePose } from "../updatePose";
+import { normalizeByteArray, normalizeHeader } from "../normalizeMessages";
+import { PointCloud2, POINTCLOUD_DATATYPES, PointField, PointFieldType } from "../ros";
+import { LayerSettings, LayerSettingsPointCloud2 } from "../settings";
+import { makePose } from "../transforms/geometry";
 import { getColorConverter } from "./pointClouds/colors";
 import { FieldReader, getReader } from "./pointClouds/fieldReaders";
-import { missingTransformMessage, MISSING_TRANSFORM } from "./transforms";
-
-type PointCloudRenderable = Omit<THREE.Object3D, "userData"> & {
-  userData: {
-    topic: string;
-    settings: LayerSettingsPointCloud2;
-    pointCloud: PointCloud2;
-    pose: Pose;
-    srcTime: bigint;
-    geometry: DynamicBufferGeometry<Float32Array, Float32ArrayConstructor>;
-    points: THREE.Points;
-  };
-};
 
 const DEFAULT_POINT_SIZE = 1.5;
 const DEFAULT_POINT_SHAPE = "circle";
 const DEFAULT_COLOR_MAP = "turbo";
 const DEFAULT_FLAT_COLOR = { r: 1, g: 1, b: 1, a: 1 };
-const DEFAULT_MIN_COLOR = { r: 0, g: 0, b: 1, a: 1 };
-const DEFAULT_MAX_COLOR = { r: 1, g: 0, b: 0, a: 1 };
+const DEFAULT_MIN_COLOR = { r: 100, g: 47, b: 105, a: 1 };
+const DEFAULT_MAX_COLOR = { r: 227, g: 177, b: 135, a: 1 };
 const DEFAULT_RGB_BYTE_ORDER = "rgba";
 
 const DEFAULT_SETTINGS: LayerSettingsPointCloud2 = {
@@ -71,39 +62,88 @@ const INVALID_POINT_CLOUD = "INVALID_POINT_CLOUD";
 
 const tempColor = { r: 0, g: 0, b: 0, a: 0 };
 
-export class PointClouds extends THREE.Object3D {
-  renderer: Renderer;
-  pointCloudsByTopic = new Map<string, PointCloudRenderable>();
+export type PointCloudUserData = BaseUserData & {
+  settings: LayerSettingsPointCloud2;
+  topic: string;
+  pointCloud: PointCloud2;
+  geometry: DynamicBufferGeometry<Float32Array, Float32ArrayConstructor>;
+  points: THREE.Points;
+  pickingMaterial: THREE.ShaderMaterial;
+};
+
+export class PointCloudRenderable extends Renderable<PointCloudUserData> {
+  override dispose(): void {
+    releasePointsMaterial(this.userData.settings, this.renderer.materialCache);
+    this.userData.geometry.dispose();
+    this.userData.pickingMaterial.dispose();
+    super.dispose();
+  }
+}
+
+export class PointClouds extends SceneExtension<PointCloudRenderable> {
   pointCloudFieldsByTopic = new Map<string, string[]>();
 
   constructor(renderer: Renderer) {
-    super();
-    this.renderer = renderer;
+    super("foxglove.PointClouds", renderer);
 
-    renderer.setSettingsNodeProvider(LayerType.PointCloud, (topicConfig, topic) =>
-      settingsNode(this.pointCloudFieldsByTopic, topicConfig, topic),
-    );
+    renderer.addDatatypeSubscriptions(POINTCLOUD_DATATYPES, this.handlePointCloud);
   }
 
-  dispose(): void {
-    for (const renderable of this.pointCloudsByTopic.values()) {
-      releasePointsMaterial(renderable.userData.settings, this.renderer.materialCache);
-      const points = renderable.userData.points;
-      points.geometry.dispose();
-      const pickingMaterial = points.userData.pickingMaterial as THREE.ShaderMaterial;
-      pickingMaterial.dispose();
+  override settingsNodes(): SettingsTreeEntry[] {
+    const configTopics = this.renderer.config.topics;
+    const handler = this.handleSettingsAction;
+    const entries: SettingsTreeEntry[] = [];
+    for (const topic of this.renderer.topics ?? []) {
+      if (POINTCLOUD_DATATYPES.has(topic.datatype)) {
+        const config = (configTopics[topic.name] ?? {}) as Partial<LayerSettingsPointCloud2>;
+        const node: SettingsTreeNodeWithActionHandler = settingsNode(
+          this.pointCloudFieldsByTopic,
+          config,
+          topic,
+        );
+        node.handler = handler;
+        entries.push({ path: ["topics", topic.name], node });
+      }
     }
-    this.children.length = 0;
-    this.pointCloudsByTopic.clear();
+    return entries;
   }
 
-  addPointCloud2Message(topic: string, pointCloud: PointCloud2): void {
-    let renderable = this.pointCloudsByTopic.get(topic);
-    if (!renderable) {
-      renderable = new THREE.Object3D() as PointCloudRenderable;
-      renderable.name = topic;
-      renderable.userData.topic = topic;
+  handleSettingsAction = (action: SettingsTreeAction): void => {
+    const path = action.payload.path;
+    if (action.action !== "update" || path.length !== 3) {
+      return;
+    }
 
+    this.saveSetting(path, action.payload.value);
+
+    // Update the renderable
+    const topicName = path[1]!;
+    const renderable = this.renderables.get(topicName);
+    if (renderable) {
+      releasePointsMaterial(renderable.userData.settings, this.renderer.materialCache);
+      const settings = this.renderer.config.topics[topicName] as
+        | Partial<LayerSettingsPointCloud2>
+        | undefined;
+      renderable.userData.settings = { ...renderable.userData.settings, ...settings };
+      renderable.userData.points.material = pointsMaterial(
+        renderable.userData.settings,
+        this.renderer.materialCache,
+      );
+      this._updatePointCloudRenderable(
+        renderable,
+        renderable.userData.pointCloud,
+        renderable.userData.receiveTime,
+      );
+    }
+  };
+
+  handlePointCloud = (messageEvent: RawMessageEvent<PointCloud2>): void => {
+    const topic = messageEvent.topic;
+    const pointCloud = normalizePointCloud2(messageEvent.message);
+    const receiveTime = toNanoSec(messageEvent.receiveTime);
+
+    let renderable = this.renderables.get(topic);
+    if (!renderable) {
       // Set the initial settings from default values merged with any user settings
       const userSettings = this.renderer.config.topics[topic] as
         | Partial<LayerSettingsPointCloud2>
@@ -121,28 +161,36 @@ export class PointClouds extends THREE.Object3D {
           draft.topics[topic] = updatedUserSettings;
         });
       }
-      renderable.userData.settings = settings;
-
-      renderable.userData.pointCloud = pointCloud;
-      renderable.userData.pose = makePose();
-      renderable.userData.srcTime = toNanoSec(pointCloud.header.stamp);
 
       const geometry = new DynamicBufferGeometry(Float32Array);
       geometry.name = `${topic}:PointCloud2:geometry`;
       geometry.createAttribute("position", 3);
       geometry.createAttribute("color", 4);
-      renderable.userData.geometry = geometry;
 
-      const material = pointsMaterial(renderable.userData.settings, this.renderer.materialCache);
+      const material = pointsMaterial(settings, this.renderer.materialCache);
+      const pickingMaterial = createPickingMaterial(settings);
       const points = new THREE.Points(geometry, material);
       points.frustumCulled = false;
       points.name = `${topic}:PointCloud2:points`;
-      points.userData.pickingMaterial = createPickingMaterial(renderable.userData.settings);
-      renderable.userData.points = points;
-      renderable.add(renderable.userData.points);
+      points.userData.pickingMaterial = pickingMaterial;
+
+      renderable = new PointCloudRenderable(topic, this.renderer, {
+        receiveTime,
+        messageTime: toNanoSec(pointCloud.header.stamp),
+        frameId: pointCloud.header.frame_id,
+        pose: makePose(),
+        settingsPath: ["topics", topic],
+        settings,
+        topic,
+        pointCloud,
+        geometry,
+        points,
+        pickingMaterial,
+      });
+      renderable.add(points);
 
       this.add(renderable);
-      this.pointCloudsByTopic.set(topic, renderable);
+      this.renderables.set(topic, renderable);
     }
 
     // Update the mapping of topic to point cloud field names if necessary
@@ -153,64 +201,18 @@ export class PointClouds extends THREE.Object3D {
       this.renderer.emit("settingsTreeChange", this.renderer);
     }
 
-    this._updatePointCloudRenderable(renderable, pointCloud);
-  }
+    this._updatePointCloudRenderable(renderable, pointCloud, receiveTime);
+  };
 
-  setTopicSettings(topic: string, settings: Partial<LayerSettingsPointCloud2>): void {
-    const renderable = this.pointCloudsByTopic.get(topic);
-    if (renderable) {
-      releasePointsMaterial(renderable.userData.settings, this.renderer.materialCache);
-      renderable.userData.settings = { ...renderable.userData.settings, ...settings };
-      renderable.userData.points.material = pointsMaterial(
-        renderable.userData.settings,
-        this.renderer.materialCache,
-      );
-      this._updatePointCloudRenderable(renderable, renderable.userData.pointCloud);
-    }
-  }
-
-  startFrame(currentTime: bigint): void {
-    const renderFrameId = this.renderer.renderFrameId;
-    const fixedFrameId = this.renderer.fixedFrameId;
-    if (renderFrameId == undefined || fixedFrameId == undefined) {
-      this.visible = false;
-      return;
-    }
-    this.visible = true;
-
-    for (const renderable of this.pointCloudsByTopic.values()) {
-      renderable.visible = renderable.userData.settings.visible;
-      if (!renderable.visible) {
-        this.renderer.settings.errors.clearTopic(renderable.userData.topic);
-        continue;
-      }
-      const srcTime = renderable.userData.srcTime;
-      const frameId = renderable.userData.pointCloud.header.frame_id;
-      const updated = updatePose(
-        renderable,
-        this.renderer.transformTree,
-        renderFrameId,
-        fixedFrameId,
-        frameId,
-        currentTime,
-        srcTime,
-      );
-      if (!updated) {
-        const message = missingTransformMessage(renderFrameId, fixedFrameId, frameId);
-        this.renderer.settings.errors.addToTopic(
-          renderable.userData.topic,
-          MISSING_TRANSFORM,
-          message,
-        );
-      } else {
-        this.renderer.settings.errors.removeFromTopic(renderable.userData.topic, MISSING_TRANSFORM);
-      }
-    }
-  }
-
-  _updatePointCloudRenderable(renderable: PointCloudRenderable, pointCloud: PointCloud2): void {
+  _updatePointCloudRenderable(
+    renderable: PointCloudRenderable,
+    pointCloud: PointCloud2,
+    receiveTime: bigint,
+  ): void {
+    renderable.userData.receiveTime = receiveTime;
+    renderable.userData.messageTime = toNanoSec(pointCloud.header.stamp);
+    renderable.userData.frameId = pointCloud.header.frame_id;
     renderable.userData.pointCloud = pointCloud;
-    renderable.userData.srcTime = toNanoSec(pointCloud.header.stamp);
 
     const settings = renderable.userData.settings;
     const data = pointCloud.data;
@@ -542,7 +544,7 @@ function settingsNode(
   const flatColor = cur?.flatColor ?? "#ffffff";
   const colorField = cur?.colorField ?? bestColorByField(pclFields);
   const colorFieldOptions = pclFields.map((field) => ({ label: field, value: field }));
-  // const gradient = cur?.gradient;
+  const gradient = cur?.gradient;
   const colorMap = cur?.colorMap ?? "turbo";
   const rgbByteOrder = cur?.rgbByteOrder ?? "rgba";
   const minValue = cur?.minValue;
@@ -573,7 +575,7 @@ function settingsNode(
     input: "select",
     options: [
       { label: "Flat", value: "flat" },
-      { label: "Color Map", value: "colormap" },
+      { label: "Color map", value: "colormap" },
       { label: "Gradient", value: "gradient" },
       { label: "RGB", value: "rgb" },
       { label: "RGBA", value: "rgba" },
@@ -592,7 +594,11 @@ function settingsNode(
 
     switch (colorMode) {
       case "gradient":
-        // node.fields.gradient = { label: "Gradient", input: "gradient", value: gradient };
+        fields.gradient = {
+          label: "Gradient",
+          input: "gradient",
+          value: gradient ?? DEFAULT_SETTINGS.gradient,
+        };
         break;
       case "colormap":
         fields.colorMap = {
@@ -601,7 +607,6 @@ function settingsNode(
           options: [
             { label: "Turbo", value: "turbo" },
             { label: "Rainbow", value: "rainbow" },
-            { label: "Gradient", value: "gradient" },
           ],
           value: colorMap,
         };
@@ -683,4 +688,30 @@ function invalidPointCloudError(
 
 function zeroReader(): number {
   return 0;
+}
+
+function normalizePointField(field: RawMessage<PointField> | undefined): PointField {
+  if (!field) {
+    return { name: "", offset: 0, datatype: PointFieldType.UNKNOWN, count: 0 };
+  }
+  return {
+    name: field.name ?? "",
+    offset: field.offset ?? 0,
+    datatype: field.datatype ?? PointFieldType.UNKNOWN,
+    count: field.count ?? 0,
+  };
+}
+
+function normalizePointCloud2(message: RawMessage<PointCloud2>): PointCloud2 {
+  return {
+    header: normalizeHeader(message.header),
+    height: message.height ?? 0,
+    width: message.width ?? 0,
+    fields: message.fields?.map(normalizePointField) ?? [],
+    is_bigendian: message.is_bigendian ?? false,
+    point_step: message.point_step ?? 0,
+    row_step: message.row_step ?? 0,
+    data: normalizeByteArray(message.data),
+    is_dense: message.is_dense ?? false,
+  };
 }

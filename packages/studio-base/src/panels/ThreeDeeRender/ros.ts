@@ -48,6 +48,7 @@ export enum MarkerAction {
 }
 
 export enum PointFieldType {
+  UNKNOWN = 0,
   INT8 = 1,
   UINT8 = 2,
   INT16 = 3,
