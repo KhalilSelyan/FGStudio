@@ -17,7 +17,7 @@ import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
 import PlusMinusIcon from "@mdi/svg/svg/plus-minus.svg";
 import LessIcon from "@mdi/svg/svg/unfold-less-horizontal.svg";
 import MoreIcon from "@mdi/svg/svg/unfold-more-horizontal.svg";
-import { Theme } from "@mui/material";
+import { MenuItem, Select, SelectChangeEvent, Theme } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { Immutable } from "immer";
 // eslint-disable-next-line no-restricted-imports
@@ -49,7 +49,6 @@ import Panel from "@foxglove/studio-base/components/Panel";
 import { usePanelContext } from "@foxglove/studio-base/components/PanelContext";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import { SettingsTreeAction } from "@foxglove/studio-base/components/SettingsTreeEditor/types";
-import Tooltip from "@foxglove/studio-base/components/Tooltip";
 import getDiff, {
   diffLabels,
   diffLabelsByLabelText,
@@ -658,21 +657,30 @@ function RawMessages(props: Props) {
           />
           {diffEnabled && (
             <div className={classes.diff}>
-              <Tooltip contents="Diff method" placement="top">
-                <Dropdown
-                  value={diffMethod}
-                  onChange={(newDiffMethod) => saveConfig({ diffMethod: newDiffMethod })}
-                  noPortal
-                  btnStyle={{ padding: "4px 10px" }}
-                >
-                  <DropdownItem value={PREV_MSG_METHOD}>
-                    <span>{PREV_MSG_METHOD}</span>
-                  </DropdownItem>
-                  <DropdownItem value={CUSTOM_METHOD}>
-                    <span>custom</span>
-                  </DropdownItem>
-                </Dropdown>
-              </Tooltip>
+              <Select
+                title="Diff method"
+                onChange={(event: SelectChangeEvent) =>
+                  saveConfig({
+                    diffMethod: event.target.value as RawMessagesPanelConfig["diffMethod"],
+                  })
+                }
+              >
+                <MenuItem value={PREV_MSG_METHOD}>{PREV_MSG_METHOD}</MenuItem>
+                <MenuItem value={CUSTOM_METHOD}>custom</MenuItem>
+              </Select>
+              <Dropdown
+                value={diffMethod}
+                onChange={(newDiffMethod) => saveConfig({ diffMethod: newDiffMethod })}
+                noPortal
+                btnStyle={{ padding: "4px 10px" }}
+              >
+                <DropdownItem value={PREV_MSG_METHOD}>
+                  <span>{PREV_MSG_METHOD}</span>
+                </DropdownItem>
+                <DropdownItem value={CUSTOM_METHOD}>
+                  <span>custom</span>
+                </DropdownItem>
+              </Dropdown>
               {diffMethod === CUSTOM_METHOD ? (
                 <MessagePathInput
                   index={1}
