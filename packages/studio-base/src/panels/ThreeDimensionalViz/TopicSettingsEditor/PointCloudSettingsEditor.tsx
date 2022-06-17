@@ -13,16 +13,18 @@
 
 import {
   Box,
+  FormControl,
   FormControlLabel,
+  InputLabel,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   SelectChangeEvent,
   Stack,
+  TextField,
 } from "@mui/material";
 import React from "react";
-import styled from "styled-components";
 
 import ColorPicker from "@foxglove/studio-base/components/ColorPicker";
 import GradientPicker from "@foxglove/studio-base/components/GradientPicker";
@@ -43,7 +45,6 @@ import { mightActuallyBePartial } from "@foxglove/studio-base/util/mightActually
 
 import CommonDecaySettings from "./CommonDecaySettings";
 import CommonPointSettings from "./CommonPointSettings";
-import { SLabel, SInput } from "./common";
 import { turboColorString } from "./turboColor";
 import { TopicSettingsEditorProps } from "./types";
 
@@ -53,12 +54,6 @@ export type PointCloudSettings = {
   decayTime?: number;
   colorMode?: ColorMode;
 };
-
-const SValueRangeInput = styled(SInput).attrs({ type: "number", placeholder: "auto" })`
-  width: 0px;
-  margin-left: 8px;
-  flex: 1 1 auto;
-`;
 
 const RainbowText = React.memo(function RainbowText({ children }: { children: string }) {
   return (
@@ -98,76 +93,78 @@ export default function PointCloudSettingsEditor(
   }
 
   return (
-    <Stack flex="auto">
+    <Stack flex="auto" gap={1}>
       <CommonPointSettings settings={settings} defaultPointSize={2} onFieldChange={onFieldChange} />
       <CommonDecaySettings settings={settings} onFieldChange={onFieldChange} />
 
-      <SLabel>Color by</SLabel>
-      <Stack direction="row" flex="auto" justifyContent="space-between" marginBottom={1}>
-        <Box minWidth={152} display="flex" alignItems="center">
-          <SegmentedControl
-            selectedId={colorMode.mode === "flat" ? "flat" : "data"}
-            onChange={(id) =>
-              onColorModeChange((prevColorMode) => {
-                if (id === "flat") {
-                  return {
-                    mode: "flat",
-                    flatColor:
-                      prevColorMode.mode === "gradient"
-                        ? prevColorMode.minColor
-                        : DEFAULT_FLAT_COLOR,
-                  };
-                }
-                return defaultColorMode;
-              })
-            }
-            options={[
-              { id: "flat", label: "Flat" },
-              { id: "data", label: "Point data" },
-            ]}
-          />
-        </Box>
-        <Stack direction="row" flex="auto" alignItems="center" marginY={0.25} marginLeft={1.5}>
-          {colorMode.mode === "flat" ? ( // For flat mode, pick a single color
-            <ColorPicker
-              color={colorMode.flatColor}
-              onChange={(flatColor) => onColorModeChange(() => ({ mode: "flat", flatColor }))}
-            /> // Otherwise, choose a field from the point cloud to color by
-          ) : (
-            <Select
-              variant="filled"
-              MenuProps={{
-                disablePortal: true,
-                MenuListProps: {
-                  dense: true,
-                },
-              }}
-              onChange={(event: SelectChangeEvent) =>
+      <FormControl>
+        <InputLabel>Color by</InputLabel>
+        <Stack direction="row" flex="auto" justifyContent="space-between" marginBottom={1}>
+          <Box minWidth={152} display="flex" alignItems="center">
+            <SegmentedControl
+              selectedId={colorMode.mode === "flat" ? "flat" : "data"}
+              onChange={(id) =>
                 onColorModeChange((prevColorMode) => {
-                  if (event.target.value === "rgb" || event.target.value === "rgba") {
-                    return { mode: event.target.value };
+                  if (id === "flat") {
+                    return {
+                      mode: "flat",
+                      flatColor:
+                        prevColorMode.mode === "gradient"
+                          ? prevColorMode.minColor
+                          : DEFAULT_FLAT_COLOR,
+                    };
                   }
-                  if (isMappedColorMode(prevColorMode)) {
-                    return { ...prevColorMode, colorField: event.target.value };
-                  }
-                  return { mode: "turbo", colorField: event.target.value };
+                  return defaultColorMode;
                 })
               }
-              value={
-                colorMode.mode === "rgb" || colorMode.mode === "rgba"
-                  ? colorMode.mode
-                  : colorMode.colorField
-              }
-            >
-              {message?.fields.map(({ name }) => (
-                <MenuItem key={name} value={name}>
-                  {name}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
+              options={[
+                { id: "flat", label: "Flat" },
+                { id: "data", label: "Point data" },
+              ]}
+            />
+          </Box>
+          <Stack direction="row" flex="auto" alignItems="center" marginY={0.25} marginLeft={1.5}>
+            {colorMode.mode === "flat" ? ( // For flat mode, pick a single color
+              <ColorPicker
+                color={colorMode.flatColor}
+                onChange={(flatColor) => onColorModeChange(() => ({ mode: "flat", flatColor }))}
+              /> // Otherwise, choose a field from the point cloud to color by
+            ) : (
+              <Select
+                variant="filled"
+                MenuProps={{
+                  disablePortal: true,
+                  MenuListProps: {
+                    dense: true,
+                  },
+                }}
+                onChange={(event: SelectChangeEvent) =>
+                  onColorModeChange((prevColorMode) => {
+                    if (event.target.value === "rgb" || event.target.value === "rgba") {
+                      return { mode: event.target.value };
+                    }
+                    if (isMappedColorMode(prevColorMode)) {
+                      return { ...prevColorMode, colorField: event.target.value };
+                    }
+                    return { mode: "turbo", colorField: event.target.value };
+                  })
+                }
+                value={
+                  colorMode.mode === "rgb" || colorMode.mode === "rgba"
+                    ? colorMode.mode
+                    : colorMode.colorField
+                }
+              >
+                {message?.fields.map(({ name }) => (
+                  <MenuItem key={name} value={name}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          </Stack>
         </Stack>
-      </Stack>
+      </FormControl>
 
       {isRgbColorMode(colorMode) && (
         <RadioGroup
@@ -191,11 +188,14 @@ export default function PointCloudSettingsEditor(
 
       {isMappedColorMode(colorMode) && (
         <Stack flex="auto" marginBottom={1}>
-          <SLabel>Value range</SLabel>
+          <InputLabel>Value range</InputLabel>
           <Stack direction="row" flex="auto" marginLeft={1}>
-            <Stack direction="row" flex="1 1 100%" alignItems="baseline" marginRight={2.5}>
-              Min
-              <SValueRangeInput
+            <Stack direction="row" flex="1 1 100%" alignItems="center" marginRight={2.5}>
+              <InputLabel>Min</InputLabel>
+              <TextField
+                type="number"
+                placeholder="auto"
+                variant="filled"
                 value={colorMode.minValue ?? ""}
                 onChange={({ target: { value } }) =>
                   onColorModeChange((prevColorMode) =>
@@ -206,9 +206,12 @@ export default function PointCloudSettingsEditor(
                 }
               />
             </Stack>
-            <Stack direction="row" flex="1 1 100%" alignItems="baseline">
-              Max
-              <SValueRangeInput
+            <Stack direction="row" flex="1 1 100%" alignItems="center">
+              <InputLabel>Max</InputLabel>
+              <TextField
+                type="number"
+                placeholder="auto"
+                variant="filled"
                 value={colorMode.maxValue ?? ""}
                 onChange={({ target: { value } }) =>
                   onColorModeChange((prevColorMode) =>

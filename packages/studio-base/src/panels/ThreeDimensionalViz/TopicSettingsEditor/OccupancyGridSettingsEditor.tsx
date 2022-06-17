@@ -11,12 +11,11 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { Checkbox, FormControlLabel, Stack } from "@mui/material";
+import { Checkbox, FormControlLabel, FormHelperText, Stack } from "@mui/material";
 
 import { Marker, MarkerArray } from "@foxglove/studio-base/types/Messages";
 
 import { TopicSettingsEditorProps } from ".";
-import { SDescription } from "./common";
 
 type GenericSettings = {
   frameLocked?: boolean;
@@ -37,11 +36,11 @@ export default function OccupancyGridSettingsEditor(
         }
         label="Frame lock"
       />
-      <SDescription>
+      <FormHelperText>
         When disabled, the grid will be positioned in the 3D scene by transforming it using its{" "}
         <code>header.stamp</code> time. When enabled, the grid will be “locked” to the current
         position of its <code>header.frame_id</code> and will move when the frame moves.
-      </SDescription>
+      </FormHelperText>
     </Stack>
   );
 }

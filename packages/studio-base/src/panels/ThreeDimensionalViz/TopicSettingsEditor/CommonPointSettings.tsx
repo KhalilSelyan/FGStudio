@@ -11,9 +11,15 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { MenuItem, Select, SelectChangeEvent, Stack } from "@mui/material";
-
-import { SLabel, SInput } from "./common";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Stack,
+  TextField,
+} from "@mui/material";
 
 export default function CommonPointSettings({
   defaultPointSize,
@@ -35,37 +41,44 @@ export default function CommonPointSettings({
   const pointShapeVal = pointShape ?? defaultPointShape;
 
   return (
-    <Stack flex="auto">
-      <SLabel>Point size</SLabel>
-      <SInput
+    <Stack flex="auto" gap={1}>
+      <TextField
+        label="Point size"
         data-test="point-size-input"
         type="number"
         placeholder={defaultPointSize.toString()}
         value={pointSizeVal}
-        min={1}
-        max={50}
-        step={1}
+        variant="filled"
+        inputProps={{
+          min: 1,
+          max: 50,
+          step: 1,
+        }}
         onChange={(e) => {
           const isInputValid = !isNaN(parseFloat(e.target.value));
           onFieldChange("pointSize", isInputValid ? parseFloat(e.target.value) : undefined);
         }}
       />
 
-      <SLabel>Point shape</SLabel>
-      <Select
-        value={pointShapeVal}
-        onChange={(event: SelectChangeEvent) => onFieldChange("pointShape", event.target.value)}
-        variant="filled"
-        MenuProps={{
-          disablePortal: true,
-          MenuListProps: {
-            dense: true,
-          },
-        }}
-      >
-        <MenuItem value="circle">Circle</MenuItem>
-        <MenuItem value="square">Square</MenuItem>
-      </Select>
+      <FormControl>
+        <InputLabel id="point-shape-label">Point shape</InputLabel>
+        <Select
+          id="point-shape-select"
+          labelId="point-shape-label"
+          value={pointShapeVal}
+          onChange={(event: SelectChangeEvent) => onFieldChange("pointShape", event.target.value)}
+          variant="filled"
+          MenuProps={{
+            disablePortal: true,
+            MenuListProps: {
+              dense: true,
+            },
+          }}
+        >
+          <MenuItem value="circle">Circle</MenuItem>
+          <MenuItem value="square">Square</MenuItem>
+        </Select>
+      </FormControl>
     </Stack>
   );
 }
