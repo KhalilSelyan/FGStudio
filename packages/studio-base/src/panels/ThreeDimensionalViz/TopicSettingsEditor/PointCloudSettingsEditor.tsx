@@ -11,13 +11,20 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { Box, FormControlLabel, Radio, RadioGroup, Stack } from "@mui/material";
+import {
+  Box,
+  FormControlLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  SelectChangeEvent,
+  Stack,
+} from "@mui/material";
 import React from "react";
 import styled from "styled-components";
 
 import ColorPicker from "@foxglove/studio-base/components/ColorPicker";
-import DropdownItem from "@foxglove/studio-base/components/Dropdown/DropdownItem";
-import Dropdown from "@foxglove/studio-base/components/Dropdown/index";
 import GradientPicker from "@foxglove/studio-base/components/GradientPicker";
 import SegmentedControl from "@foxglove/studio-base/components/SegmentedControl";
 import {
@@ -127,38 +134,37 @@ export default function PointCloudSettingsEditor(
               onChange={(flatColor) => onColorModeChange(() => ({ mode: "flat", flatColor }))}
             /> // Otherwise, choose a field from the point cloud to color by
           ) : (
-            <Dropdown
-              text={
-                colorMode.mode === "rgb" || colorMode.mode === "rgba"
-                  ? colorMode.mode
-                  : colorMode.colorField
+            <Select
+              variant="filled"
+              MenuProps={{
+                disablePortal: true,
+                MenuListProps: {
+                  dense: true,
+                },
+              }}
+              onChange={(event: SelectChangeEvent) =>
+                onColorModeChange((prevColorMode) => {
+                  if (event.target.value === "rgb" || event.target.value === "rgba") {
+                    return { mode: event.target.value };
+                  }
+                  if (isMappedColorMode(prevColorMode)) {
+                    return { ...prevColorMode, colorField: event.target.value };
+                  }
+                  return { mode: "turbo", colorField: event.target.value };
+                })
               }
               value={
                 colorMode.mode === "rgb" || colorMode.mode === "rgba"
                   ? colorMode.mode
                   : colorMode.colorField
               }
-              onChange={(value) =>
-                onColorModeChange((prevColorMode) => {
-                  if (value === "rgb" || value === "rgba") {
-                    return { mode: value };
-                  }
-                  if (isMappedColorMode(prevColorMode)) {
-                    return { ...prevColorMode, colorField: value };
-                  }
-                  return { mode: "turbo", colorField: value };
-                })
-              }
-              btnStyle={{ padding: "8px 12px" }}
             >
-              {!message
-                ? []
-                : message.fields.map(({ name }) => (
-                    <DropdownItem key={name} value={name}>
-                      {name}
-                    </DropdownItem>
-                  ))}
-            </Dropdown>
+              {message?.fields.map(({ name }) => (
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
+              ))}
+            </Select>
           )}
         </Stack>
       </Stack>
