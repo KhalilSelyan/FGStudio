@@ -29,19 +29,23 @@ const SEditBox = muiStyled("div")`
 const StyledTextarea = muiStyled(OutlinedInput)(({ theme }) => ({
   width: "100%",
   height: "100%",
+  maxHeight: 200,
   textAlign: "left",
   backgroundColor: theme.palette.background.paper,
   overflow: "hidden",
   padding: theme.spacing(1, 0.5),
   flex: "auto",
+  display: "flex",
+  flexDirection: "column",
   resize: "none",
 
   ".MuiInputBase-input": {
-    height: "100% !important",
+    flex: "auto",
+    // height: "100% !important",
     font: "inherit",
     lineHeight: 1.4,
     fontFamily: fonts.MONOSPACE,
-    fontSize: "100%",
+    fontSize: theme.typography.body2.fontSize,
     overflow: "auto !important",
     resize: "none",
   },
@@ -175,9 +179,10 @@ export function ValidatedInputBase({
         value={inputStr}
         onChange={handleChange}
         multiline
+        error={error.length > 0}
       />
       {error.length > 0 && (
-        <Typography color="error.main" paddingX={0.5} paddingY={1}>
+        <Typography variant="caption" color="error.main" paddingX={0.5} paddingY={1}>
           {error}
         </Typography>
       )}
