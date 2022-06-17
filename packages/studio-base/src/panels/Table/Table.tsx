@@ -279,7 +279,6 @@ export default function Table({
             </IconButton>
             <Select
               value={pageSize}
-              variant="filled"
               size="small"
               onChange={(e) => setPageSize(Number(e.target.value))}
               MenuProps={{ MenuListProps: { dense: true } }}
