@@ -198,7 +198,7 @@ export class PointClouds extends SceneExtension<PointCloudRenderable> {
     if (!fields || fields.length !== pointCloud.fields.length) {
       fields = pointCloud.fields.map((field) => field.name);
       this.pointCloudFieldsByTopic.set(topic, fields);
-      this.renderer.emit("settingsTreeChange", this.renderer);
+      this.updateSettingsTree();
     }
 
     this._updatePointCloudRenderable(renderable, pointCloud, receiveTime);
