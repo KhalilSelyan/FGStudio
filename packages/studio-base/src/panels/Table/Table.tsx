@@ -257,8 +257,8 @@ export default function Table({
         </tbody>
       </LegacyTable>
       {!isNested && (
-        <Container maxWidth="xs">
-          <Stack direction="row" gap={1} padding={0.5} alignItems="center">
+        <Container maxWidth="xs" disableGutters>
+          <Stack direction="row" gap={1} paddingX={0.5} paddingTop={0.5} alignItems="center">
             <IconButton onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
               <KeyboardDoubleArrowLeftIcon fontSize="small" />
             </IconButton>
