@@ -110,32 +110,6 @@ export const LegacyTextarea = styled.textarea`
 `;
 
 /**
- * @deprecated The LegacySelect should not be used for new features. use fluentui/react instead
- */
-export const LegacySelect = styled.select`
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: ${({ theme }) => theme.effects.roundedCorner2};
-  border: none;
-  color: ${({ theme }) => theme.semanticColors.inputText};
-  font: inherit;
-  font-family: ${fonts.SANS_SERIF};
-  font-feature-settings: ${fonts.SANS_SERIF_FEATURE_SETTINGS};
-  font-size: 100%;
-  margin: 0 0.2em;
-  padding: 8px 12px;
-  text-align: left;
-
-  &:focus {
-    outline: none;
-    background-color: rgba(255, 255, 255, 0.075);
-  }
-  &.disabled {
-    color: ${({ theme }) => theme.semanticColors.disabledText};
-    background-color: ${({ theme }) => theme.semanticColors.buttonBackgroundDisabled};
-  }
-`;
-
-/**
  * @deprecated The LegacyTable should not be used for new features. use fluentui/react instead
  */
 export const LegacyTable = styled.table`
