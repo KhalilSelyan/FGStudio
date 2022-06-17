@@ -11,7 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { FormControl, InputLabel, Stack, TextField } from "@mui/material";
+import { FormControl, FormLabel, Stack, TextField } from "@mui/material";
 
 import ColorPicker from "@foxglove/studio-base/components/ColorPicker";
 import { Color } from "@foxglove/studio-base/types/Messages";
@@ -42,7 +42,7 @@ export default function PoseSettingsEditor(
   return (
     <Stack flex="auto" gap={1}>
       <FormControl>
-        <InputLabel>Color</InputLabel>
+        <FormLabel>Color</FormLabel>
         <ColorPicker
           color={settings.overrideColor}
           onChange={(newColor) => onFieldChange("overrideColor", newColor)}

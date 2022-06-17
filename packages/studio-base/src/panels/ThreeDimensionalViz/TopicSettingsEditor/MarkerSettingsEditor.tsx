@@ -15,8 +15,8 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
+  FormLabel,
   FormHelperText,
-  InputLabel,
   Stack,
 } from "@mui/material";
 
@@ -38,7 +38,7 @@ export default function MarkerSettingsEditor(
   return (
     <Stack flex="auto">
       <FormControl>
-        <InputLabel>Color</InputLabel>
+        <FormLabel>Color</FormLabel>
         <FormHelperText>
           Overrides <code>color</code>/<code>colors</code> for all markers on this topic.
         </FormHelperText>
@@ -49,7 +49,7 @@ export default function MarkerSettingsEditor(
       </FormControl>
 
       <FormControl>
-        <InputLabel>Line marker click events override</InputLabel>
+        <FormLabel>Line marker click events override</FormLabel>
         <FormControlLabel
           control={
             <Checkbox
@@ -61,7 +61,7 @@ export default function MarkerSettingsEditor(
           }
           label="Allow clicking inside line markers that form polygons"
         />
-        <FormHelperText>
+        <FormHelperText variant="standard">
           Treating line markers as polygons. Clicking inside the lines in the marker selects the
           marker. The default behavior for line markers requires the user to click exactly on the
           line to select the line marker. <em>This option can reduce performance</em>.

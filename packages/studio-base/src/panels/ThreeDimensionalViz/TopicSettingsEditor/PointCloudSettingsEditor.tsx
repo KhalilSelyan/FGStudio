@@ -15,13 +15,12 @@ import {
   Box,
   FormControl,
   FormControlLabel,
-  InputLabel,
+  FormLabel,
   MenuItem,
   Radio,
   RadioGroup,
   Select,
   SelectChangeEvent,
-  Stack,
   TextField,
 } from "@mui/material";
 import React from "react";
@@ -29,6 +28,7 @@ import React from "react";
 import ColorPicker from "@foxglove/studio-base/components/ColorPicker";
 import GradientPicker from "@foxglove/studio-base/components/GradientPicker";
 import SegmentedControl from "@foxglove/studio-base/components/SegmentedControl";
+import Stack from "@foxglove/studio-base/components/Stack";
 import {
   ColorMode,
   DEFAULT_FLAT_COLOR,
@@ -98,8 +98,8 @@ export default function PointCloudSettingsEditor(
       <CommonDecaySettings settings={settings} onFieldChange={onFieldChange} />
 
       <FormControl>
-        <InputLabel>Color by</InputLabel>
-        <Stack direction="row" flex="auto" justifyContent="space-between" marginBottom={1}>
+        <FormLabel>Color by</FormLabel>
+        <Stack direction="row" flex="auto" justifyContent="space-between" gap={1}>
           <Box minWidth={152} display="flex" alignItems="center">
             <SegmentedControl
               selectedId={colorMode.mode === "flat" ? "flat" : "data"}
@@ -123,7 +123,7 @@ export default function PointCloudSettingsEditor(
               ]}
             />
           </Box>
-          <Stack direction="row" flex="auto" alignItems="center" marginY={0.25} marginLeft={1.5}>
+          <Stack direction="row" flex="auto" alignItems="center">
             {colorMode.mode === "flat" ? ( // For flat mode, pick a single color
               <ColorPicker
                 color={colorMode.flatColor}
@@ -187,12 +187,12 @@ export default function PointCloudSettingsEditor(
       )}
 
       {isMappedColorMode(colorMode) && (
-        <Stack flex="auto" marginBottom={1}>
-          <InputLabel>Value range</InputLabel>
-          <Stack direction="row" flex="auto" marginLeft={1}>
-            <Stack direction="row" flex="1 1 100%" alignItems="center" marginRight={2.5}>
-              <InputLabel>Min</InputLabel>
+        <Stack flex="auto">
+          <FormLabel>Value range</FormLabel>
+          <Stack direction="row" flex="auto" gap={1}>
+            <Stack direction="row" flex="1 1 100%" alignItems="baseline" gap={1}>
               <TextField
+                label="Min"
                 type="number"
                 placeholder="auto"
                 variant="filled"
@@ -206,9 +206,9 @@ export default function PointCloudSettingsEditor(
                 }
               />
             </Stack>
-            <Stack direction="row" flex="1 1 100%" alignItems="center">
-              <InputLabel>Max</InputLabel>
+            <Stack direction="row" flex="1 1 100%" alignItems="baseline" gap={1}>
               <TextField
+                label="Max"
                 type="number"
                 placeholder="auto"
                 variant="filled"

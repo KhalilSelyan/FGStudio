@@ -11,7 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { FormControl, InputLabel, Stack, TextField } from "@mui/material";
+import { FormControl, FormLabel, Stack, TextField } from "@mui/material";
 
 import { Color } from "@foxglove/regl-worldview";
 import ColorPicker from "@foxglove/studio-base/components/ColorPicker";
@@ -35,7 +35,7 @@ export default function GridSettingsEditor(
   return (
     <Stack flex="auto" gap={1}>
       <FormControl>
-        <InputLabel>Color</InputLabel>
+        <FormLabel>Color</FormLabel>
         <ColorPicker
           color={settings.overrideColor ?? DEFAULT_GRID_COLOR}
           onChange={(newColor) => onFieldChange("overrideColor", newColor)}

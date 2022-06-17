@@ -11,7 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { Checkbox, FormControlLabel, FormHelperText, Stack } from "@mui/material";
+import { Checkbox, FormControl, FormControlLabel, FormHelperText, Stack } from "@mui/material";
 
 import { Marker, MarkerArray } from "@foxglove/studio-base/types/Messages";
 
@@ -27,20 +27,22 @@ export default function OccupancyGridSettingsEditor(
   const { settings = {}, onFieldChange } = props;
   return (
     <Stack flex="auto">
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={settings.frameLocked === true}
-            onChange={(_ev, checked) => onFieldChange("frameLocked", checked)}
-          />
-        }
-        label="Frame lock"
-      />
-      <FormHelperText>
-        When disabled, the grid will be positioned in the 3D scene by transforming it using its{" "}
-        <code>header.stamp</code> time. When enabled, the grid will be “locked” to the current
-        position of its <code>header.frame_id</code> and will move when the frame moves.
-      </FormHelperText>
+      <FormControl>
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={settings.frameLocked === true}
+              onChange={(_ev, checked) => onFieldChange("frameLocked", checked)}
+            />
+          }
+          label="Frame lock"
+        />
+        <FormHelperText variant="standard">
+          When disabled, the grid will be positioned in the 3D scene by transforming it using its{" "}
+          <code>header.stamp</code> time. When enabled, the grid will be “locked” to the current
+          position of its <code>header.frame_id</code> and will move when the frame moves.
+        </FormHelperText>
+      </FormControl>
     </Stack>
   );
 }

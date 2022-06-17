@@ -31,6 +31,7 @@ export default function CommonDecaySettings({
         variant="filled"
         type="number"
         placeholder="0"
+        FormHelperTextProps={{ variant: "standard" }}
         value={decayTimeValue}
         inputProps={{ min: 0, step: 0.1 }}
         onChange={(e) => {

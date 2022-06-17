@@ -13,7 +13,7 @@
 
 import {
   FormControl,
-  InputLabel,
+  FormLabel,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -61,7 +61,7 @@ export default function CommonPointSettings({
       />
 
       <FormControl>
-        <InputLabel id="point-shape-label">Point shape</InputLabel>
+        <FormLabel id="point-shape-label">Point shape</FormLabel>
         <Select
           id="point-shape-select"
           labelId="point-shape-label"
