@@ -38,6 +38,8 @@ export const LegacyInput = styled.input`
 export const LegacyTable = styled.table`
   border: none;
   width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
 
   th {
     color: ${({ theme }) => theme.semanticColors.bodyText};
@@ -49,6 +51,7 @@ export const LegacyTable = styled.table`
   }
   th,
   td {
+    vertical-align: top;
     border: 1px solid ${({ theme }) => theme.semanticColors.bodyDivider};
     padding: 0 0.3em;
     line-height: 1.3em;

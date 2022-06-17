@@ -8,7 +8,7 @@ import Stack from "@foxglove/studio-base/components/Stack";
 
 import { NumberInput } from "./NumberInput";
 
-export function Vec3Input({
+export function Vec2Input({
   disabled = false,
   onChange,
   precision,
@@ -17,19 +17,15 @@ export function Vec3Input({
   value,
 }: {
   disabled?: boolean;
-  onChange: (
-    value: undefined | [undefined | number, undefined | number, undefined | number],
-  ) => void;
+  onChange: (value: undefined | [undefined | number, undefined | number]) => void;
   precision?: number;
   readOnly?: boolean;
   step?: number;
-  value: undefined | readonly [undefined | number, undefined | number, undefined | number];
+  value: undefined | readonly [undefined | number, undefined | number];
 }): JSX.Element {
   const onChangeCallback = useCallback(
     (position: number, inputValue: undefined | number) => {
-      const newValue: [undefined | number, undefined | number, undefined | number] = [
-        ...(value ?? [0, 0, 0]),
-      ];
+      const newValue: [undefined | number, undefined | number] = [...(value ?? [0, 0])];
       newValue[position] = inputValue;
       onChange(newValue);
     },
