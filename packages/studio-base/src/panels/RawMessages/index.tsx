@@ -28,8 +28,6 @@ import Tree from "react-json-tree";
 import { useLatest } from "react-use";
 
 import { useDataSourceInfo } from "@foxglove/studio-base/PanelAPI";
-import Dropdown from "@foxglove/studio-base/components/Dropdown";
-import DropdownItem from "@foxglove/studio-base/components/Dropdown/DropdownItem";
 import EmptyState from "@foxglove/studio-base/components/EmptyState";
 import Icon from "@foxglove/studio-base/components/Icon";
 import useGetItemStringWithTimezone from "@foxglove/studio-base/components/JsonTree/useGetItemStringWithTimezone";
