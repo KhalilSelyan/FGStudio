@@ -14,32 +14,30 @@ import {
 
 import { NodeError } from "./LayerErrors";
 
-export type LayerSettingsTransform = {
-  visible: boolean;
-};
-
 export type SelectEntry = { label: string; value: string };
 
-export type LayerSettingsMarkerNamespace = {
+export type BaseSettings = {
   visible: boolean;
+  frameLocked?: boolean;
 };
 
-export type LayerSettingsMarker = {
-  visible: boolean;
+export type LayerSettingsTransform = BaseSettings;
+
+export type LayerSettingsMarkerNamespace = BaseSettings;
+
+export type LayerSettingsMarker = BaseSettings & {
   namespaces: Record<string, LayerSettingsMarkerNamespace>;
 };
 
-export type LayerSettingsOccupancyGrid = {
-  visible: boolean;
+export type LayerSettingsOccupancyGrid = BaseSettings & {
+  frameLocked: boolean;
   minColor: string;
   maxColor: string;
   unknownColor: string;
   invalidColor: string;
-  frameLocked: boolean;
 };
 
-export type LayerSettingsPointCloud2 = {
-  visible: boolean;
+export type LayerSettingsPointCloud2 = BaseSettings & {
   pointSize: number;
   pointShape: "circle" | "square";
   decayTime: number;
@@ -53,36 +51,31 @@ export type LayerSettingsPointCloud2 = {
   maxValue: number | undefined;
 };
 
-export type LayerSettingsPolygon = {
-  visible: boolean;
+export type LayerSettingsPolygon = BaseSettings & {
   lineWidth: number;
   color: string;
 };
 
-export type LayerSettingsPose = {
-  visible: boolean;
+export type LayerSettingsPose = BaseSettings & {
   scale: [number, number, number];
   color: string;
   showCovariance: boolean;
   covarianceColor: string;
 };
 
-export type LayerSettingsCameraInfo = {
-  visible: boolean;
+export type LayerSettingsCameraInfo = BaseSettings & {
   distance: number;
   width: number;
   color: string;
 };
 
-export type LayerSettingsImage = {
-  visible: boolean;
+export type LayerSettingsImage = BaseSettings & {
   cameraInfoTopic: string | undefined;
   distance: number;
   color: string;
 };
 
-export type CustomLayerSettings = {
-  visible: boolean;
+export type CustomLayerSettings = BaseSettings & {
   label: string;
   type: LayerType;
 };
@@ -175,31 +168,31 @@ function buildTransformNode(
   return node;
 }
 
-function buildTopicNode(
-  topicConfig: Partial<LayerSettings>,
-  topic: Topic,
-  layerType: LayerType,
-  settingsNodeProvider: SettingsNodeProvider,
-  coordinateFrames: ReadonlyArray<SelectEntry>,
-): undefined | SettingsTreeNode {
-  // Transform settings are handled elsewhere
-  if (layerType === LayerType.Transform) {
-    return;
-  }
+// function buildTopicNode(
+//   topicConfig: Partial<LayerSettings>,
+//   topic: Topic,
+//   layerType: LayerType,
+//   settingsNodeProvider: SettingsNodeProvider,
+//   coordinateFrames: ReadonlyArray<SelectEntry>,
+// ): undefined | SettingsTreeNode {
+//   // Transform settings are handled elsewhere
+//   if (layerType === LayerType.Transform) {
+//     return;
+//   }
 
-  const node = settingsNodeProvider(topicConfig, topic);
-  node.label ??= topic.name;
-  node.visible ??= topicConfig.visible ?? true;
-  node.defaultExpansionState ??= "collapsed";
+//   const node = settingsNodeProvider(topicConfig, topic);
+//   node.label ??= topic.name;
+//   node.visible ??= topicConfig.visible ?? true;
+//   node.defaultExpansionState ??= "collapsed";
 
-  // Populate coordinateFrames into options for the "frameId" field
-  const frameIdField = node.fields?.["frameId"];
-  if (frameIdField && frameIdField.input === "select") {
-    frameIdField.options = [...frameIdField.options, ...coordinateFrames] as SelectEntry[];
-  }
+//   // Populate coordinateFrames into options for the "frameId" field
+//   const frameIdField = node.fields?.["frameId"];
+//   if (frameIdField && frameIdField.input === "select") {
+//     frameIdField.options = [...frameIdField.options, ...coordinateFrames] as SelectEntry[];
+//   }
 
-  return node;
-}
+//   return node;
+// }
 
 function buildLayerNode(
   layer: CustomLayerSettings,
@@ -226,8 +219,8 @@ export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoo
     coordinateFrames,
     layerErrors,
     followTf,
-    topics,
-    topicsToLayerTypes,
+    // topics,
+    // topicsToLayerTypes,
     settingsNodeProviders,
   } = options;
   const { cameraState, scene } = config;
@@ -254,29 +247,44 @@ export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoo
 
   // Build the settings tree for topics
   const topicsChildren: SettingsTreeChildren = {};
-  const sortedTopics = sorted(topics, (a, b) => a.name.localeCompare(b.name));
-  for (const topic of sortedTopics) {
-    const layerType = topicsToLayerTypes.get(topic.name);
-    if (layerType == undefined) {
-      continue;
-    }
-    const settingsNodeProvider = settingsNodeProviders.get(layerType);
-    if (settingsNodeProvider == undefined) {
-      continue;
-    }
-    const topicConfig = config.topics[topic.name] ?? {};
-    const newNode = buildTopicNode(
-      topicConfig,
-      topic,
-      layerType,
-      settingsNodeProvider,
-      coordinateFrames,
-    );
-    if (newNode) {
-      newNode.error = layerErrors.errorAtPath(["topics", topic.name]);
-      topicsChildren[topic.name] = newNode;
-    }
-  }
+  // const sortedTopics = sorted(topics, (a, b) => a.name.localeCompare(b.name));
+  // for (const topic of topics) {
+  //   const layerType = topicsToLayerTypes.get(topic.name);
+  //   if (layerType == undefined) {
+  //     continue;
+  //   }
+  //   const settingsNodeProvider = settingsNodeProviders.get(layerType);
+  //   if (settingsNodeProvider == undefined) {
+  //     continue;
+  //   }
+  //   const topicConfig = config.topics[topic.name] ?? {};
+  //   const newNode = buildTopicNode(
+  //     topicConfig,
+  //     topic,
+  //     layerType,
+  //     settingsNodeProvider,
+  //     coordinateFrames,
+  //   );
+  //   if (newNode) {
+  //     newNode.error = layerErrors.errorAtPath(["topics", topic.name]);
+  //     topicsChildren[topic.name] = newNode;
+  //   }
+  // }
+
+  // Inject the topic nodes from scene extensions
+  // for (const [topic, entry] of options.topicSettingsNodes.entries()) {
+  //   if (entry == undefined) {
+  //     continue;
+  //   }
+
+  //   const topicConfig = config.topics[topic] as Partial<LayerSettings> | undefined;
+  //   const node = entry.node;
+
+  //   node.label ??= topic;
+  //   node.visible ??= topicConfig?.visible ?? true;
+  //   node.defaultExpansionState ??= "collapsed";
+  //   topicsChildren[topic] = node;
+  // }
 
   // Build the settings tree for custom layers
   const layersChildren: SettingsTreeChildren = {};
@@ -370,6 +378,6 @@ export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoo
   };
 }
 
-function sorted<T>(array: ReadonlyArray<T>, compare: (a: T, b: T) => number): Array<T> {
-  return array.slice().sort(compare);
-}
+// function sorted<T>(array: ReadonlyArray<T>, compare: (a: T, b: T) => number): Array<T> {
+//   return array.slice().sort(compare);
+// }

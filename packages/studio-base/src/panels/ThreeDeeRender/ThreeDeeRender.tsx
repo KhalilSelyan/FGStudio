@@ -2,9 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { produce } from "immer";
-// eslint-disable-next-line no-restricted-imports
-import { isEqual, cloneDeep, merge, get, set, unset } from "lodash";
+import { isEqual, cloneDeep, merge } from "lodash";
 import React, { useCallback, useLayoutEffect, useEffect, useState, useMemo, useRef } from "react";
 import ReactDOM from "react-dom";
 import { useResizeDetector } from "react-resize-detector";
@@ -23,41 +21,18 @@ import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglo
 import {
   EXPERIMENTAL_PanelExtensionContextWithSettings,
   SettingsTreeAction,
+  SettingsTreeRoots,
 } from "@foxglove/studio-base/components/SettingsTreeEditor/types";
 import useCleanup from "@foxglove/studio-base/hooks/useCleanup";
 
 import { DebugGui } from "./DebugGui";
-import { NodeError } from "./LayerErrors";
-import { SUPPORTED_DATATYPES, Renderer } from "./Renderer";
+import { Renderer } from "./Renderer";
 import { RendererContext, useRendererEvent } from "./RendererContext";
 import { Stats } from "./Stats";
-import {
-  CAMERA_INFO_DATATYPES,
-  COMPRESSED_IMAGE_DATATYPES,
-  IMAGE_DATATYPES,
-  MARKER_ARRAY_DATATYPES,
-  MARKER_DATATYPES,
-  OCCUPANCY_GRID_DATATYPES,
-  POINTCLOUD_DATATYPES,
-  POSE_STAMPED_DATATYPES,
-  POSE_WITH_COVARIANCE_STAMPED_DATATYPES,
-  TF_DATATYPES,
-  TRANSFORM_STAMPED_DATATYPES,
-} from "./ros";
-import {
-  buildSettingsTree,
-  CustomLayerSettings,
-  LayerSettings,
-  LayerSettingsGrid,
-  LayerSettingsImage,
-  LayerType,
-  SelectEntry,
-  SettingsTreeOptions,
-  ThreeDeeRenderConfig,
-} from "./settings";
+import { TF_DATATYPES, TRANSFORM_STAMPED_DATATYPES } from "./ros";
+import { CustomLayerSettings, LayerSettings, LayerType, ThreeDeeRenderConfig } from "./settings";
 
 const SHOW_DEBUG: true | false = false;
-const DEFAULT_FRAME_IDS = ["base_link", "odom", "map", "earth"];
 
 const log = Logger.getLogger(__filename);
 
@@ -114,7 +89,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     };
   });
   const configRef = useRef(config);
-  const { cameraState, followTf: configFollowTf } = config;
+  const { cameraState } = config;
   const backgroundColor = config.scene.backgroundColor;
 
   const [canvas, setCanvas] = useState<HTMLCanvasElement | ReactNull>(ReactNull);
@@ -139,6 +114,8 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   const renderRef = useRef({ needsRender: false });
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
 
+  const datatypeHandlers = useMemo(() => renderer?.datatypeHandlers ?? new Map(), [renderer]);
+
   // Config cameraState
   const setCameraState = useCallback((state: CameraState) => {
     setConfig((prevConfig) => ({ ...prevConfig, cameraState: state }));
@@ -158,119 +135,155 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   }, [topics]);
 
   // Build a map from (renderable) topic name to LayerType enum
-  const topicsToLayerTypes = useMemo(() => buildTopicsToLayerTypes(topics), [topics]);
+  // const topicsToLayerTypes = useMemo(() => buildTopicsToLayerTypes(topics), [topics]);
 
   // Handle user changes in the settings sidebar
   const actionHandler = useCallback(
-    (action: SettingsTreeAction) =>
-      settingsTreeActionHandler(action, renderer, setConfig, renderRef, topicsToLayerTypes),
-    [renderer, topicsToLayerTypes],
+    (action: SettingsTreeAction) => renderer?.settings.handleAction(action),
+    [renderer],
   );
 
   // Handle internal changes to the settings sidebar
-  useRendererEvent(
-    "settingsTreeChange",
-    (update) => {
-      setConfig((oldConfig) =>
-        produce(oldConfig, (draft) => {
-          const entry = get(renderer?.config ?? draft, update.path);
-          set(draft, update.path, { ...entry });
-        }),
-      );
-    },
-    renderer,
-  );
+  // useRendererEvent(
+  //   "settingsTreeChange",
+  //   (update) => {
+  //     setConfig((oldConfig) =>
+  //       produce(oldConfig, (draft) => {
+  //         const entry = get(renderer?.config ?? draft, update.path);
+  //         set(draft, update.path, { ...entry });
+  //       }),
+  //     );
+  //   },
+  //   renderer,
+  // );
+
+  // useRendererEvent("configUpdated", (newConfig) => setConfig(newConfig), renderer);
 
   // Maintain a list of coordinate frames for the settings sidebar
-  const [coordinateFrames, setCoordinateFrames] = useState<SelectEntry[]>(
-    coordinateFrameList(renderer),
-  );
+  // const [coordinateFrames, setCoordinateFrames] = useState<SelectEntry[]>(
+  //   coordinateFrameList(renderer),
+  // );
+
+  // Select a default coordinate frame in case the user hasn't selected one
+  // const [defaultFrame, setDefaultFrame] = useState<string | undefined>(undefined);
+  // const updateCoordinateFrames = useCallback(
+  //   (curRenderer: Renderer) => {
+  //     // setCoordinateFrames(coordinateFrameList(curRenderer));
+
+  //     // Prefer frames from [REP-105](https://www.ros.org/reps/rep-0105.html)
+  //     for (const frameId of DEFAULT_FRAME_IDS) {
+  //       if (curRenderer.transformTree.hasFrame(frameId)) {
+  //         setDefaultFrame(frameId);
+  //         return;
+  //       }
+  //     }
+
+  //     // Choose the root frame with the most children
+  //     const rootsToCounts = new Map<string, number>();
+  //     for (const frame of curRenderer.transformTree.frames().values()) {
+  //       const rootId = frame.root().id;
+  //       rootsToCounts.set(rootId, (rootsToCounts.get(rootId) ?? 0) + 1);
+  //     }
+  //     const rootsArray = Array.from(rootsToCounts.entries());
+  //     const rootId = rootsArray.sort((a, b) => b[1] - a[1])[0]?.[0];
+  //     if (rootId != undefined) {
+  //       setDefaultFrame(rootId);
+  //     }
+  //   },
+  //   [setDefaultFrame],
+  // );
+
+  // Maintain a list of topic settings nodes with update handlers
+  // const [topicSettingsNodes, setTopicSettingsNodes] = useState<
+  //   Map<string, SettingsTreeNodeAndHandler<unknown> | undefined>
+  // >(new Map());
+  // const updateTopicSettingsNodes = useCallback(
+  //   (newSettingsNodes: Map<string, SettingsTreeNodeAndHandler<unknown> | undefined>) =>
+  //     setTopicSettingsNodes(newSettingsNodes),
+  //   [],
+  // );
+
   // Maintain a tree of settings node errors
-  const [layerErrors, setLayerErrors] = useState<NodeError>(new NodeError([]));
-  const [defaultFrame, setDefaultFrame] = useState<string | undefined>(undefined);
-  const updateCoordinateFrames = useCallback(
-    (curRenderer: Renderer) => {
-      setCoordinateFrames(coordinateFrameList(curRenderer));
+  // const [layerErrors, setLayerErrors] = useState<NodeError>(new NodeError([]));
+  // const updateLayerErrors = useCallback(
+  //   (_: unknown, __: unknown, ___: unknown, curRenderer: Renderer) =>
+  //     setLayerErrors(currenderer.settings.errors.errors.clone()),
+  //   [],
+  // );
 
-      // Prefer frames from [REP-105](https://www.ros.org/reps/rep-0105.html)
-      for (const frameId of DEFAULT_FRAME_IDS) {
-        if (curRenderer.transformTree.hasFrame(frameId)) {
-          setDefaultFrame(frameId);
-          return;
-        }
-      }
-
-      // Choose the root frame with the most children
-      const rootsToCounts = new Map<string, number>();
-      for (const frame of curRenderer.transformTree.frames().values()) {
-        const rootId = frame.root().id;
-        rootsToCounts.set(rootId, (rootsToCounts.get(rootId) ?? 0) + 1);
-      }
-      const rootsArray = Array.from(rootsToCounts.entries());
-      const rootId = rootsArray.sort((a, b) => b[1] - a[1])[0]?.[0];
-      if (rootId != undefined) {
-        setDefaultFrame(rootId);
-      }
-    },
-    [setDefaultFrame],
-  );
-  const updateLayerErrors = useCallback(
-    (_: unknown, __: unknown, ___: unknown, curRenderer: Renderer) =>
-      setLayerErrors(curRenderer.layerErrors.errors.clone()),
+  // Maintain the settings tree
+  const [settingsTree, setSettingsTree] = useState<SettingsTreeRoots | undefined>(undefined);
+  const updateSettingsTree = useCallback(
+    (curRenderer: Renderer) => setSettingsTree(curRenderer.settings.tree()),
     [],
   );
 
-  useRendererEvent("transformTreeUpdated", updateCoordinateFrames, renderer);
-  useRendererEvent("layerErrorUpdate", updateLayerErrors, renderer);
+  const updateConfig = useCallback((curRenderer: Renderer) => setConfig(curRenderer.config), []);
+
+  // useRendererEvent("transformTreeUpdated", updateCoordinateFrames, renderer);
+  // useRendererEvent("layerErrorUpdate", updateLayerErrors, renderer);
+  useRendererEvent("settingsTreeChange", updateSettingsTree, renderer);
+  useRendererEvent("configChange", updateConfig, renderer);
+  // useRendererEvent("topicSettingsNodesUpdated", updateTopicSettingsNodes, renderer);
 
   // Set the rendering frame (aka followTf) based on the configured frame, falling back to a
   // heuristically chosen best frame for the current scene (defaultFrame)
-  const followTf = useMemo(
-    () =>
-      configFollowTf != undefined && renderer && renderer.transformTree.hasFrame(configFollowTf)
-        ? configFollowTf
-        : defaultFrame,
-    [configFollowTf, defaultFrame, renderer],
-  );
+  // const followTf = useMemo(
+  //   () =>
+  //     configFollowTf != undefined && renderer && renderer.transformTree.hasFrame(configFollowTf)
+  //       ? configFollowTf
+  //       : defaultFrame,
+  //   [configFollowTf, defaultFrame, renderer],
+  // );
 
-  const settingsNodeProviders = renderer?.settingsNodeProviders;
+  // const settingsNodeProviders = renderer?.settingsNodeProviders;
 
-  const throttledUpdatePanelSettingsTree = useDebouncedCallback(
-    (handler: (action: SettingsTreeAction) => void, options: SettingsTreeOptions) => {
-      // eslint-disable-next-line no-underscore-dangle
-      (
-        context as unknown as EXPERIMENTAL_PanelExtensionContextWithSettings
-      ).__updatePanelSettingsTree({
-        actionHandler: handler,
-        roots: buildSettingsTree(options),
-      });
-    },
-    250,
-    { leading: true, trailing: true, maxWait: 250 },
-  );
+  // const throttledUpdatePanelSettingsTree = useDebouncedCallback(
+  //   (handler: (action: SettingsTreeAction) => void, options: SettingsTreeOptions) => {
+  //     // eslint-disable-next-line no-underscore-dangle
+  //     (
+  //       context as unknown as EXPERIMENTAL_PanelExtensionContextWithSettings
+  //     ).__updatePanelSettingsTree({
+  //       actionHandler: handler,
+  //       roots: buildSettingsTree(options),
+  //     });
+  //   },
+  //   250,
+  //   { leading: true, trailing: true, maxWait: 250 },
+  // );
+
+  // useEffect(() => {
+  //   throttledUpdatePanelSettingsTree(actionHandler, {
+  //     config,
+  //     coordinateFrames,
+  //     layerErrors,
+  //     followTf,
+  //     topics: topics ?? [],
+  //     topicsToLayerTypes,
+  //     settingsNodeProviders: settingsNodeProviders ?? new Map(),
+  //   });
+  // }, [
+  //   actionHandler,
+  //   config,
+  //   context,
+  //   coordinateFrames,
+  //   followTf,
+  //   layerErrors,
+  //   settingsNodeProviders,
+  //   throttledUpdatePanelSettingsTree,
+  //   topics,
+  //   topicsToLayerTypes,
+  // ]);
 
   useEffect(() => {
-    throttledUpdatePanelSettingsTree(actionHandler, {
-      config,
-      coordinateFrames,
-      layerErrors,
-      followTf,
-      topics: topics ?? [],
-      topicsToLayerTypes,
-      settingsNodeProviders: settingsNodeProviders ?? new Map(),
+    // eslint-disable-next-line no-underscore-dangle
+    (
+      context as unknown as EXPERIMENTAL_PanelExtensionContextWithSettings
+    ).__updatePanelSettingsTree({
+      actionHandler,
+      roots: settingsTree ?? {},
     });
-  }, [
-    actionHandler,
-    config,
-    context,
-    coordinateFrames,
-    followTf,
-    layerErrors,
-    settingsNodeProviders,
-    throttledUpdatePanelSettingsTree,
-    topics,
-    topicsToLayerTypes,
-  ]);
+  }, [actionHandler, context, settingsTree]);
 
   // Update the renderer's reference to `config` when it changes
   useEffect(() => {
@@ -280,13 +293,21 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     }
   }, [config, renderer]);
 
-  // Update renderer and draw a new frame when followTf changes
+  // Update the renderer's reference to `topics` when it changes
   useEffect(() => {
-    if (renderer?.config && followTf != undefined) {
-      renderer.renderFrameId = followTf;
+    if (renderer) {
+      renderer.setTopics(topics);
       renderRef.current.needsRender = true;
     }
-  }, [followTf, renderer]);
+  }, [topics, renderer]);
+
+  // Update renderer and draw a new frame when followTf changes
+  // useEffect(() => {
+  //   if (renderer?.config && followTf != undefined) {
+  //     renderer.renderFrameId = followTf;
+  //     renderRef.current.needsRender = true;
+  //   }
+  // }, [followTf, renderer]);
 
   // Save panel settings whenever they change
   const throttledSave = useDebouncedCallback(
@@ -357,26 +378,33 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       // Subscribe to all transform topics
       if (TF_DATATYPES.has(topic.datatype) || TRANSFORM_STAMPED_DATATYPES.has(topic.datatype)) {
         subscriptions.add(topic.name);
-      } else if (SUPPORTED_DATATYPES.has(topic.datatype)) {
+      } else if (datatypeHandlers.has(topic.datatype)) {
         // Subscribe to known datatypes if the topic has not been toggled off
         const topicConfig = config.topics[topic.name] as Partial<LayerSettings> | undefined;
         if (topicConfig?.visible !== false) {
           subscriptions.add(topic.name);
         }
       }
+      // } else if (SUPPORTED_DATATYPES.has(topic.datatype)) {
+      //   // Subscribe to known datatypes if the topic has not been toggled off
+      //   const topicConfig = config.topics[topic.name] as Partial<LayerSettings> | undefined;
+      //   if (topicConfig?.visible !== false) {
+      //     subscriptions.add(topic.name);
+      //   }
+      // }
     }
 
-    // For camera imge topics, subscribe to their corresponding sensor_msgs/CameraInfo topic
-    for (const configEntry of Object.values(config.topics)) {
-      const topicConfig = configEntry as Partial<LayerSettingsImage> | undefined;
-      if (topicConfig?.visible !== false && topicConfig?.cameraInfoTopic != undefined) {
-        subscriptions.add(topicConfig.cameraInfoTopic);
-      }
-    }
+    // For camera image topics, subscribe to their corresponding sensor_msgs/CameraInfo topic
+    // for (const configEntry of Object.values(config.topics)) {
+    //   const topicConfig = configEntry as Partial<LayerSettingsImage> | undefined;
+    //   if (topicConfig?.visible !== false && topicConfig?.cameraInfoTopic != undefined) {
+    //     subscriptions.add(topicConfig.cameraInfoTopic);
+    //   }
+    // }
 
     const newTopics = Array.from(subscriptions.keys()).sort();
     setTopicsToSubscribe((prevTopics) => (isEqual(prevTopics, newTopics) ? prevTopics : newTopics));
-  }, [topics, config.topics]);
+  }, [topics, config.topics, datatypeHandlers]);
 
   // Notify the extension context when our subscription list changes
   useEffect(() => {
@@ -472,217 +500,170 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   );
 }
 
-function settingsTreeActionHandler(
-  action: SettingsTreeAction,
-  renderer: Renderer | ReactNull,
-  setConfig: React.Dispatch<React.SetStateAction<ThreeDeeRenderConfig>>,
-  renderRef: React.MutableRefObject<{ needsRender: boolean }>,
-  topicsToLayerTypes: Map<string, LayerType>,
-) {
-  setConfig((oldConfig) => {
-    if (action.action === "perform-node-action") {
-      log.debug(`[${action.action}][${action.payload.id}]`);
+// function settingsTreeActionHandler(
+//   action: SettingsTreeAction,
+//   renderer: Renderer | ReactNull,
+//   setConfig: React.Dispatch<React.SetStateAction<ThreeDeeRenderConfig>>,
+//   renderRef: React.MutableRefObject<{ needsRender: boolean }>,
+//   // topicsToLayerTypes: Map<string, LayerType>,
+// ) {
+//   setConfig((oldConfig) => {
+//     if (action.action === "perform-node-action") {
+//       log.debug(`[${action.action}][${action.payload.id}]`);
 
-      if (!renderer) {
-        return oldConfig;
-      }
+//       if (!renderer) {
+//         return oldConfig;
+//       }
 
-      const [actionId, actionLayerId] = action.payload.id.split(" ");
-      if (actionId === "add-grid" && actionLayerId != undefined) {
-        log.debug(`Creating grid layer ${actionLayerId}`);
-        const layerConfig = { label: "Grid", type: LayerType.Grid, visible: true };
-        const newConfig = produce(oldConfig, (draft) =>
-          set(draft, [...action.payload.path, actionLayerId], layerConfig),
-        );
+//       const [actionId, actionLayerId] = action.payload.id.split(" ");
+//       if (actionId === "add-grid" && actionLayerId != undefined) {
+//         log.debug(`Creating grid layer ${actionLayerId}`);
+//         const layerConfig = { label: "Grid", type: LayerType.Grid, visible: true };
+//         const newConfig = produce(oldConfig, (draft) =>
+//           set(draft, [...action.payload.path, actionLayerId], layerConfig),
+//         );
 
-        updateLayerSettings(renderer, actionLayerId, layerConfig.type, layerConfig);
-        renderRef.current.needsRender = true;
-        return newConfig;
-      } else if (action.payload.id === "delete") {
-        const pathLayerId = action.payload.path[action.payload.path.length - 1]!;
-        const layerConfig = get(oldConfig, action.payload.path) as
-          | Partial<CustomLayerSettings>
-          | undefined;
-        const newConfig = produce(oldConfig, (draft) => void unset(draft, action.payload.path));
+//         updateLayerSettings(renderer, actionLayerId, layerConfig.type, layerConfig);
+//         renderRef.current.needsRender = true;
+//         return newConfig;
+//       } else if (action.payload.id === "delete") {
+//         const pathLayerId = action.payload.path[action.payload.path.length - 1]!;
+//         const layerConfig = get(oldConfig, action.payload.path) as
+//           | Partial<CustomLayerSettings>
+//           | undefined;
+//         const newConfig = produce(oldConfig, (draft) => void unset(draft, action.payload.path));
 
-        if (layerConfig?.type != undefined) {
-          updateLayerSettings(renderer, pathLayerId, layerConfig.type, undefined);
-        }
-        renderRef.current.needsRender = true;
-        return newConfig;
-      } else {
-        return oldConfig;
-      }
-    } else {
-      const newConfig = produce(oldConfig, (draft) =>
-        set(draft, action.payload.path, action.payload.value),
-      );
+//         if (layerConfig?.type != undefined) {
+//           updateLayerSettings(renderer, pathLayerId, layerConfig.type, undefined);
+//         }
+//         renderRef.current.needsRender = true;
+//         return newConfig;
+//       } else {
+//         return oldConfig;
+//       }
+//     } else {
+//       const newConfig = produce(oldConfig, (draft) =>
+//         set(draft, action.payload.path, action.payload.value),
+//       );
 
-      if (renderer) {
-        const basePath = action.payload.path[0];
-        if (basePath === "transforms") {
-          // A transform setting was changed, inform the renderer about it and
-          // draw a new frame
-          const frameId = action.payload.path[1]!;
-          const transformConfig = newConfig.transforms[frameId];
-          if (transformConfig) {
-            renderer.setTransformSettings(frameId, transformConfig);
-            renderRef.current.needsRender = true;
-          }
-        } else if (basePath === "topics") {
-          // A topic setting was changed, inform the renderer about it and
-          // draw a new frame
-          const topic = action.payload.path[1]!;
-          const layerType = topicsToLayerTypes.get(topic);
-          if (layerType != undefined) {
-            updateTopicSettings(renderer, topic, layerType, newConfig);
-            renderRef.current.needsRender = true;
-          }
-        } else if (basePath === "layers") {
-          // A custom layer setting was changed, inform the renderer about
-          // it and draw a new frame
-          const layerId = action.payload.path[1]!;
-          const layerConfig = newConfig.layers[layerId];
-          if (layerConfig != undefined) {
-            updateLayerSettings(renderer, layerId, layerConfig.type, layerConfig);
-            renderRef.current.needsRender = true;
-          }
-        }
-      }
+//       if (renderer) {
+//         const basePath = action.payload.path[0];
+//         if (basePath === "transforms") {
+//           // A transform setting was changed, inform the renderer about it and
+//           // draw a new frame
+//           const frameId = action.payload.path[1]!;
+//           const transformConfig = newConfig.transforms[frameId];
+//           if (transformConfig) {
+//             renderer.setTransformSettings(frameId, transformConfig);
+//             renderRef.current.needsRender = true;
+//           }
+//         } else if (basePath === "topics") {
+//           // A topic setting was changed, inform the renderer about it and
+//           // draw a new frame
+//           // const topic = action.payload.path[1]!;
+//           // renderer.setTopicSettings(topic, newConfig);
+//           renderRef.current.needsRender = true;
+//         } else if (basePath === "layers") {
+//           // A custom layer setting was changed, inform the renderer about
+//           // it and draw a new frame
+//           const layerId = action.payload.path[1]!;
+//           const layerConfig = newConfig.layers[layerId];
+//           if (layerConfig != undefined) {
+//             updateLayerSettings(renderer, layerId, layerConfig.type, layerConfig);
+//             renderRef.current.needsRender = true;
+//           }
+//         }
+//       }
 
-      return newConfig;
-    }
-  });
-}
+//       return newConfig;
+//     }
+//   });
+// }
 
-function coordinateFrameList(renderer: Renderer | ReactNull | undefined): SelectEntry[] {
-  if (!renderer) {
-    return [];
-  }
+// function coordinateFrameList(renderer: Renderer | ReactNull | undefined): SelectEntry[] {
+//   if (!renderer) {
+//     return [];
+//   }
 
-  type FrameEntry = { id: string; children: FrameEntry[] };
+//   type FrameEntry = { id: string; children: FrameEntry[] };
 
-  const frames = Array.from(renderer.transformTree.frames().values());
-  const frameMap = new Map<string, FrameEntry>(
-    frames.map((frame) => [frame.id, { id: frame.id, children: [] }]),
-  );
+//   const frames = Array.from(renderer.transformTree.frames().values());
+//   const frameMap = new Map<string, FrameEntry>(
+//     frames.map((frame) => [frame.id, { id: frame.id, children: [] }]),
+//   );
 
-  // Create a hierarchy of coordinate frames
-  const rootFrames: FrameEntry[] = [];
-  for (const frame of frames) {
-    const frameEntry = frameMap.get(frame.id)!;
-    const parentId = frame.parent()?.id;
-    if (parentId == undefined) {
-      rootFrames.push(frameEntry);
-    } else {
-      const parent = frameMap.get(parentId);
-      if (parent == undefined) {
-        continue;
-      }
-      parent.children.push(frameEntry);
-    }
-  }
+//   // Create a hierarchy of coordinate frames
+//   const rootFrames: FrameEntry[] = [];
+//   for (const frame of frames) {
+//     const frameEntry = frameMap.get(frame.id)!;
+//     const parentId = frame.parent()?.id;
+//     if (parentId == undefined) {
+//       rootFrames.push(frameEntry);
+//     } else {
+//       const parent = frameMap.get(parentId);
+//       if (parent == undefined) {
+//         continue;
+//       }
+//       parent.children.push(frameEntry);
+//     }
+//   }
 
-  // Convert the `rootFrames` hierarchy into a flat list of coordinate frames with depth
-  const output: SelectEntry[] = [];
+//   // Convert the `rootFrames` hierarchy into a flat list of coordinate frames with depth
+//   const output: SelectEntry[] = [];
 
-  function addFrame(frame: FrameEntry, depth: number) {
-    const frameName =
-      frame.id === "" || frame.id.startsWith(" ") || frame.id.endsWith(" ")
-        ? `"${frame.id}"`
-        : frame.id;
-    output.push({
-      value: frame.id,
-      label: `${"\u00A0\u00A0".repeat(depth)}${frameName}`,
-    });
-    frame.children.sort((a, b) => a.id.localeCompare(b.id));
-    for (const child of frame.children) {
-      addFrame(child, depth + 1);
-    }
-  }
+//   function addFrame(frame: FrameEntry, depth: number) {
+//     const frameName =
+//       frame.id === "" || frame.id.startsWith(" ") || frame.id.endsWith(" ")
+//         ? `"${frame.id}"`
+//         : frame.id;
+//     output.push({
+//       value: frame.id,
+//       label: `${"\u00A0\u00A0".repeat(depth)}${frameName}`,
+//     });
+//     frame.children.sort((a, b) => a.id.localeCompare(b.id));
+//     for (const child of frame.children) {
+//       addFrame(child, depth + 1);
+//     }
+//   }
 
-  rootFrames.sort((a, b) => a.id.localeCompare(b.id));
-  for (const entry of rootFrames) {
-    addFrame(entry, 0);
-  }
+//   rootFrames.sort((a, b) => a.id.localeCompare(b.id));
+//   for (const entry of rootFrames) {
+//     addFrame(entry, 0);
+//   }
 
-  return output;
-}
+//   return output;
+// }
 
-function buildTopicsToLayerTypes(topics: ReadonlyArray<Topic> | undefined): Map<string, LayerType> {
-  const map = new Map<string, LayerType>();
-  if (!topics) {
-    return map;
-  }
-  for (const topic of topics) {
-    const datatype = topic.datatype;
-    if (SUPPORTED_DATATYPES.has(datatype)) {
-      if (TF_DATATYPES.has(datatype) || TRANSFORM_STAMPED_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.Transform);
-      } else if (MARKER_DATATYPES.has(datatype) || MARKER_ARRAY_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.Marker);
-      } else if (OCCUPANCY_GRID_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.OccupancyGrid);
-      } else if (POINTCLOUD_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.PointCloud);
-      } else if (
-        POSE_STAMPED_DATATYPES.has(datatype) ||
-        POSE_WITH_COVARIANCE_STAMPED_DATATYPES.has(datatype)
-      ) {
-        map.set(topic.name, LayerType.Pose);
-      } else if (CAMERA_INFO_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.CameraInfo);
-      } else if (IMAGE_DATATYPES.has(datatype) || COMPRESSED_IMAGE_DATATYPES.has(datatype)) {
-        map.set(topic.name, LayerType.Image);
-      }
-    }
-  }
-  return map;
-}
-
-function updateTopicSettings(
-  renderer: Renderer,
-  topic: string,
-  layerType: LayerType,
-  config: ThreeDeeRenderConfig,
-) {
-  const topicConfig = config.topics[topic] as Partial<LayerSettings> | undefined;
-  if (!topicConfig) {
-    return;
-  }
-
-  // If visibility is toggled off for this topic, clear its topic errors
-  if (topicConfig.visible === false) {
-    renderer.layerErrors.clearTopic(topic);
-  }
-
-  switch (layerType) {
-    case LayerType.Marker:
-      renderer.setMarkerSettings(topic, topicConfig);
-      break;
-    case LayerType.OccupancyGrid:
-      renderer.setOccupancyGridSettings(topic, topicConfig);
-      break;
-    case LayerType.PointCloud:
-      renderer.setPointCloud2Settings(topic, topicConfig);
-      break;
-    case LayerType.Pose:
-      renderer.setPoseSettings(topic, topicConfig);
-      break;
-    case LayerType.CameraInfo:
-      renderer.setCameraInfoSettings(topic, topicConfig);
-      break;
-    case LayerType.Image:
-      renderer.setImageSettings(topic, topicConfig);
-      break;
-    case LayerType.Grid:
-    case LayerType.Transform:
-    default:
-      throw new Error(
-        `Attempted to update topic settings for type ${layerType} (topic "${topic}")`,
-      );
-  }
-}
+// function buildTopicsToLayerTypes(topics: ReadonlyArray<Topic> | undefined): Map<string, LayerType> {
+//   const map = new Map<string, LayerType>();
+//   if (!topics) {
+//     return map;
+//   }
+//   for (const topic of topics) {
+//     const datatype = topic.datatype;
+//     if (SUPPORTED_DATATYPES.has(datatype)) {
+//       if (TF_DATATYPES.has(datatype) || TRANSFORM_STAMPED_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.Transform);
+//       } else if (MARKER_DATATYPES.has(datatype) || MARKER_ARRAY_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.Marker);
+//       } else if (OCCUPANCY_GRID_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.OccupancyGrid);
+//       } else if (POINTCLOUD_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.PointCloud);
+//       } else if (
+//         POSE_STAMPED_DATATYPES.has(datatype) ||
+//         POSE_WITH_COVARIANCE_STAMPED_DATATYPES.has(datatype)
+//       ) {
+//         map.set(topic.name, LayerType.Pose);
+//       } else if (CAMERA_INFO_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.CameraInfo);
+//       } else if (IMAGE_DATATYPES.has(datatype) || COMPRESSED_IMAGE_DATATYPES.has(datatype)) {
+//         map.set(topic.name, LayerType.Image);
+//       }
+//     }
+//   }
+//   return map;
+// }
 
 function updateLayerSettings(
   renderer: Renderer,
@@ -692,12 +673,12 @@ function updateLayerSettings(
 ) {
   // If visibility is toggled off for this layer, clear its layer errors
   if (layerConfig?.visible === false) {
-    renderer.layerErrors.clearPath(["layers", id]);
+    renderer.settings.errors.clearPath(["layers", id]);
   }
 
   switch (layerType) {
     case LayerType.Grid:
-      renderer.setGridSettings(id, layerConfig as Partial<LayerSettingsGrid> | undefined);
+      // renderer.setGridSettings(id, layerConfig as Partial<LayerSettingsGrid> | undefined);
       break;
     default:
       throw new Error(`Attempted to update layer settings for type ${layerType} (id "${id}")`);

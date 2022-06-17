@@ -8,8 +8,9 @@ import { toNanoSec } from "@foxglove/rostime";
 
 import { Renderer } from "../Renderer";
 import { rgbaToCssString, SRGBToLinear, stringToRgba } from "../color";
-import { Pose, ColorRGBA, OccupancyGrid } from "../ros";
+import { ColorRGBA, OccupancyGrid } from "../ros";
 import { LayerSettingsOccupancyGrid, LayerType } from "../settings";
+import { Pose } from "../transforms/geometry";
 import { updatePose } from "../updatePose";
 import { missingTransformMessage, MISSING_TRANSFORM } from "./transforms";
 
@@ -152,7 +153,7 @@ export class OccupancyGrids extends THREE.Object3D {
     for (const renderable of this.occupancyGridsByTopic.values()) {
       renderable.visible = renderable.userData.settings.visible;
       if (!renderable.visible) {
-        this.renderer.layerErrors.clearTopic(renderable.userData.topic);
+        this.renderer.settings.errors.clearTopic(renderable.userData.topic);
         continue;
       }
 
@@ -170,9 +171,13 @@ export class OccupancyGrids extends THREE.Object3D {
       );
       if (!updated) {
         const message = missingTransformMessage(renderFrameId, fixedFrameId, frameId);
-        this.renderer.layerErrors.addToTopic(renderable.userData.topic, MISSING_TRANSFORM, message);
+        this.renderer.settings.errors.addToTopic(
+          renderable.userData.topic,
+          MISSING_TRANSFORM,
+          message,
+        );
       } else {
-        this.renderer.layerErrors.removeFromTopic(renderable.userData.topic, MISSING_TRANSFORM);
+        this.renderer.settings.errors.removeFromTopic(renderable.userData.topic, MISSING_TRANSFORM);
       }
     }
   }
@@ -226,7 +231,7 @@ function invalidOccupancyGridError(
   renderable: OccupancyGridRenderable,
   message: string,
 ): void {
-  renderer.layerErrors.addToTopic(renderable.userData.topic, INVALID_OCCUPANCY_GRID, message);
+  renderer.settings.errors.addToTopic(renderable.userData.topic, INVALID_OCCUPANCY_GRID, message);
 }
 
 function createTexture(occupancyGrid: OccupancyGrid): THREE.DataTexture {

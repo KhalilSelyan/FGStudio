@@ -10,9 +10,9 @@ import { RenderableLineList } from "@foxglove/studio-base/panels/ThreeDeeRender/
 
 import { Renderer } from "../Renderer";
 import { stringToRgba } from "../color";
-import { Marker, Pose, TIME_ZERO, Vector3 } from "../ros";
+import { Marker, TIME_ZERO, Vector3 } from "../ros";
 import { LayerSettingsGrid, LayerType, PRECISION_DEGREES, PRECISION_DISTANCE } from "../settings";
-import { makePose, xyzrpyToPose } from "../transforms/geometry";
+import { makePose, Pose, xyzrpyToPose } from "../transforms/geometry";
 import { updatePose } from "../updatePose";
 import { missingTransformMessage, MISSING_TRANSFORM } from "./transforms";
 
@@ -148,7 +148,7 @@ export class Grids extends THREE.Object3D {
 
       renderable.visible = renderable.userData.settings.visible;
       if (!renderable.visible) {
-        this.renderer.layerErrors.clearPath(path);
+        this.renderer.settings.errors.clearPath(path);
         continue;
       }
 
@@ -164,9 +164,9 @@ export class Grids extends THREE.Object3D {
       renderable.visible = updated;
       if (!updated) {
         const message = missingTransformMessage(renderFrameId, fixedFrameId, frameId);
-        this.renderer.layerErrors.add(path, MISSING_TRANSFORM, message);
+        this.renderer.settings.errors.add(path, MISSING_TRANSFORM, message);
       } else {
-        this.renderer.layerErrors.remove(path, MISSING_TRANSFORM);
+        this.renderer.settings.errors.remove(path, MISSING_TRANSFORM);
       }
     }
   }

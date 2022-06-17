@@ -8,7 +8,8 @@ import { Time } from "@foxglove/rostime";
 import { MessageEvent } from "@foxglove/studio";
 
 import { stringToRgba } from "../color";
-import { ColorRGBA, Marker, Point, Pose } from "../ros";
+import { ColorRGBA, Marker, Point } from "../ros";
+import { Pose } from "../transforms/geometry";
 
 // ts-prune-ignore-next
 export type MarkerArgs = {

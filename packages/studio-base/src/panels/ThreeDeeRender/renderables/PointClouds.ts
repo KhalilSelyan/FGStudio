@@ -15,9 +15,9 @@ import { DynamicBufferGeometry } from "../DynamicBufferGeometry";
 import { MaterialCache, PointCloudColor } from "../MaterialCache";
 import { Renderer } from "../Renderer";
 import { rgbaToCssString, stringToRgba } from "../color";
-import { Pose, PointCloud2, PointFieldType } from "../ros";
+import { PointCloud2, PointFieldType } from "../ros";
 import { LayerSettings, LayerSettingsPointCloud2, LayerType } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose, Pose } from "../transforms/geometry";
 import { updatePose } from "../updatePose";
 import { getColorConverter } from "./pointClouds/colors";
 import { FieldReader, getReader } from "./pointClouds/fieldReaders";
@@ -120,9 +120,6 @@ export class PointClouds extends THREE.Object3D {
           updatedUserSettings.colorMap = settings.colorMap;
           draft.topics[topic] = updatedUserSettings;
         });
-
-        // Normally we would emit "settingsTreeChange" from Renderer here, but we know the topic to
-        // field name mapping will be updated below and trigger the same event, so skip it here
       }
       renderable.userData.settings = settings;
 
@@ -153,7 +150,7 @@ export class PointClouds extends THREE.Object3D {
     if (!fields || fields.length !== pointCloud.fields.length) {
       fields = pointCloud.fields.map((field) => field.name);
       this.pointCloudFieldsByTopic.set(topic, fields);
-      this.renderer.emit("settingsTreeChange", { path: ["topics", topic] });
+      this.renderer.emit("settingsTreeChange", this.renderer);
     }
 
     this._updatePointCloudRenderable(renderable, pointCloud);
@@ -184,7 +181,7 @@ export class PointClouds extends THREE.Object3D {
     for (const renderable of this.pointCloudsByTopic.values()) {
       renderable.visible = renderable.userData.settings.visible;
       if (!renderable.visible) {
-        this.renderer.layerErrors.clearTopic(renderable.userData.topic);
+        this.renderer.settings.errors.clearTopic(renderable.userData.topic);
         continue;
       }
       const srcTime = renderable.userData.srcTime;
@@ -200,9 +197,13 @@ export class PointClouds extends THREE.Object3D {
       );
       if (!updated) {
         const message = missingTransformMessage(renderFrameId, fixedFrameId, frameId);
-        this.renderer.layerErrors.addToTopic(renderable.userData.topic, MISSING_TRANSFORM, message);
+        this.renderer.settings.errors.addToTopic(
+          renderable.userData.topic,
+          MISSING_TRANSFORM,
+          message,
+        );
       } else {
-        this.renderer.layerErrors.removeFromTopic(renderable.userData.topic, MISSING_TRANSFORM);
+        this.renderer.settings.errors.removeFromTopic(renderable.userData.topic, MISSING_TRANSFORM);
       }
     }
   }
@@ -230,11 +231,19 @@ export class PointClouds extends THREE.Object3D {
       return;
     } else if (data.length < pointCloud.height * pointCloud.row_step) {
       const message = `PointCloud2 data length ${data.length} is less than height ${pointCloud.height} * row_step ${pointCloud.row_step}`;
-      this.renderer.layerErrors.addToTopic(renderable.userData.topic, INVALID_POINT_CLOUD, message);
+      this.renderer.settings.errors.addToTopic(
+        renderable.userData.topic,
+        INVALID_POINT_CLOUD,
+        message,
+      );
       // Allow this error for now since we currently ignore row_step
     } else if (pointCloud.width * pointCloud.point_step > pointCloud.row_step) {
       const message = `PointCloud2 width ${pointCloud.width} * point_step ${pointCloud.point_step} is greater than row_step ${pointCloud.row_step}`;
-      this.renderer.layerErrors.addToTopic(renderable.userData.topic, INVALID_POINT_CLOUD, message);
+      this.renderer.settings.errors.addToTopic(
+        renderable.userData.topic,
+        INVALID_POINT_CLOUD,
+        message,
+      );
       // Allow this error for now since we currently ignore row_step
     }
 
@@ -668,7 +677,7 @@ function invalidPointCloudError(
   renderable: PointCloudRenderable,
   message: string,
 ): void {
-  renderer.layerErrors.addToTopic(renderable.userData.topic, INVALID_POINT_CLOUD, message);
+  renderer.settings.errors.addToTopic(renderable.userData.topic, INVALID_POINT_CLOUD, message);
   renderable.userData.geometry.resize(0);
 }
 

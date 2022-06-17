@@ -4,6 +4,8 @@
 
 import { Time } from "@foxglove/rostime";
 
+import { Pose } from "./transforms/geometry";
+
 export type Matrix3 = [number, number, number, number, number, number, number, number, number];
 
 // prettier-ignore
@@ -89,11 +91,6 @@ export type ColorRGBA = {
   a: number;
 };
 
-export type Pose = {
-  position: Vector3;
-  orientation: Quaternion;
-};
-
 export type PoseWithCovariance = {
   pose: Pose;
   covariance: Matrix6;
@@ -109,14 +106,18 @@ export type Header = {
   seq?: number;
 };
 
-export type TF = {
+export type Transform = {
+  translation: Vector3;
+  rotation: Quaternion;
+};
+
+export type TransformStamped = {
   header: Header;
   child_frame_id: string;
-  transform: {
-    rotation: Quaternion;
-    translation: Vector3;
-  };
+  transform: Transform;
 };
+
+export type TFMessage = { transforms: TransformStamped[] };
 
 export type Marker = {
   header: Header;
@@ -205,6 +206,27 @@ export type CameraInfo = {
   K: Matrix3 | [];
   R: Matrix3 | [];
   P: Matrix3x4 | [];
+  binning_x: number;
+  binning_y: number;
+  roi: RegionOfInterest;
+};
+
+// The capitalization of the single-letter matrix names is different between
+// ROS 1 and ROS 2. This type represents that ambiguity, before normalizing into
+// the CameraInfo type
+export type IncomingCameraInfo = {
+  header: Header;
+  height: number;
+  width: number;
+  distortion_model: string;
+  D: number[] | undefined;
+  K: Matrix3 | [] | undefined;
+  R: Matrix3 | [] | undefined;
+  P: Matrix3x4 | [] | undefined;
+  d: number[] | undefined;
+  k: Matrix3 | [] | undefined;
+  r: Matrix3 | [] | undefined;
+  p: Matrix3x4 | [] | undefined;
   binning_x: number;
   binning_y: number;
   roi: RegionOfInterest;

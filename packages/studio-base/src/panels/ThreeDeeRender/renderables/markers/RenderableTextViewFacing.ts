@@ -23,7 +23,7 @@ export class RenderableTextViewFacing extends RenderableMarker {
   }
 
   override dispose(): void {
-    this._renderer.labels.removeById(this.name);
+    this.renderer.labels.removeById(this.name);
   }
 
   override update(marker: Marker, receiveTime: bigint | undefined): void {
@@ -44,7 +44,7 @@ export class RenderableTextViewFacing extends RenderableMarker {
       }
 
       // A field that affects the label appearance has changed, rebuild the label
-      this.label = this._renderer.labels.setLabel(this.name, {
+      this.label = this.renderer.labels.setLabel(this.name, {
         text: marker.text,
         color: marker.color,
       });
