@@ -4,7 +4,7 @@
 
 import { v4 as uuidv4 } from "uuid";
 
-import { CameraState, DEFAULT_CAMERA_STATE } from "@foxglove/regl-worldview";
+import { CameraState } from "@foxglove/regl-worldview";
 import { Topic } from "@foxglove/studio";
 import {
   SettingsTreeChildren,
@@ -131,18 +131,11 @@ export type SettingsNodeProvider = (
 export const PRECISION_DISTANCE = 3; // [1mm]
 export const PRECISION_DEGREES = 1;
 
-const ONE_DEGREE = Math.PI / 180;
-
 // This is the unused topic parameter passed to the SettingsNodeProvider for
 // LayerType.Transform, since transforms do not map 1:1 to topics, and custom
 // layers which do not have a topic name or datatype
 const EMPTY_TOPIC = { name: "", datatype: "" };
 
-const PATH_GENERAL = ["general"];
-const PATH_SCENE = ["scene"];
-const PATH_CAMERA_STATE = ["cameraState"];
-const PATH_TRANSFORMS = ["transforms"];
-const PATH_TOPICS = ["topics"];
 const PATH_LAYERS = ["layers"];
 
 export type SettingsTreeOptions = {
@@ -154,45 +147,6 @@ export type SettingsTreeOptions = {
   topicsToLayerTypes: Map<string, LayerType>;
   settingsNodeProviders: Map<LayerType, SettingsNodeProvider>;
 };
-
-function buildTransformNode(
-  tfConfig: Partial<LayerSettingsTransform>,
-  frameId: string,
-  frameDisplayName: string,
-  settingsNodeProvider: SettingsNodeProvider,
-): undefined | SettingsTreeNode {
-  const node = settingsNodeProvider(tfConfig, { name: frameId, datatype: "" });
-  node.label ??= frameDisplayName;
-  node.visible ??= tfConfig.visible ?? true;
-  node.defaultExpansionState ??= "collapsed";
-  return node;
-}
-
-// function buildTopicNode(
-//   topicConfig: Partial<LayerSettings>,
-//   topic: Topic,
-//   layerType: LayerType,
-//   settingsNodeProvider: SettingsNodeProvider,
-//   coordinateFrames: ReadonlyArray<SelectEntry>,
-// ): undefined | SettingsTreeNode {
-//   // Transform settings are handled elsewhere
-//   if (layerType === LayerType.Transform) {
-//     return;
-//   }
-
-//   const node = settingsNodeProvider(topicConfig, topic);
-//   node.label ??= topic.name;
-//   node.visible ??= topicConfig.visible ?? true;
-//   node.defaultExpansionState ??= "collapsed";
-
-//   // Populate coordinateFrames into options for the "frameId" field
-//   const frameIdField = node.fields?.["frameId"];
-//   if (frameIdField && frameIdField.input === "select") {
-//     frameIdField.options = [...frameIdField.options, ...coordinateFrames] as SelectEntry[];
-//   }
-
-//   return node;
-// }
 
 function buildLayerNode(
   layer: CustomLayerSettings,
@@ -214,77 +168,7 @@ function buildLayerNode(
 }
 
 export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoots {
-  const {
-    config,
-    coordinateFrames,
-    layerErrors,
-    followTf,
-    // topics,
-    // topicsToLayerTypes,
-    settingsNodeProviders,
-  } = options;
-  const { cameraState, scene } = config;
-  const { backgroundColor } = scene;
-
-  // Build the settings tree for transforms
-  const transformsChildren: SettingsTreeChildren = {};
-  const tfSettingsNodeProvider = settingsNodeProviders.get(LayerType.Transform);
-  if (tfSettingsNodeProvider != undefined) {
-    for (const { label: frameName, value: frameId } of options.coordinateFrames) {
-      const transformConfig = config.transforms[frameId] ?? {};
-      const newNode = buildTransformNode(
-        transformConfig,
-        frameId,
-        frameName,
-        tfSettingsNodeProvider,
-      );
-      if (newNode) {
-        newNode.error = layerErrors.errorAtPath(["transforms", frameId]);
-        transformsChildren[frameId] = newNode;
-      }
-    }
-  }
-
-  // Build the settings tree for topics
-  const topicsChildren: SettingsTreeChildren = {};
-  // const sortedTopics = sorted(topics, (a, b) => a.name.localeCompare(b.name));
-  // for (const topic of topics) {
-  //   const layerType = topicsToLayerTypes.get(topic.name);
-  //   if (layerType == undefined) {
-  //     continue;
-  //   }
-  //   const settingsNodeProvider = settingsNodeProviders.get(layerType);
-  //   if (settingsNodeProvider == undefined) {
-  //     continue;
-  //   }
-  //   const topicConfig = config.topics[topic.name] ?? {};
-  //   const newNode = buildTopicNode(
-  //     topicConfig,
-  //     topic,
-  //     layerType,
-  //     settingsNodeProvider,
-  //     coordinateFrames,
-  //   );
-  //   if (newNode) {
-  //     newNode.error = layerErrors.errorAtPath(["topics", topic.name]);
-  //     topicsChildren[topic.name] = newNode;
-  //   }
-  // }
-
-  // Inject the topic nodes from scene extensions
-  // for (const [topic, entry] of options.topicSettingsNodes.entries()) {
-  //   if (entry == undefined) {
-  //     continue;
-  //   }
-
-  //   const topicConfig = config.topics[topic] as Partial<LayerSettings> | undefined;
-  //   const node = entry.node;
-
-  //   node.label ??= topic;
-  //   node.visible ??= topicConfig?.visible ?? true;
-  //   node.defaultExpansionState ??= "collapsed";
-  //   topicsChildren[topic] = node;
-  // }
+  const { config, coordinateFrames, layerErrors, settingsNodeProviders } = options;
 
   // Build the settings tree for custom layers
   const layersChildren: SettingsTreeChildren = {};
@@ -309,65 +193,6 @@ export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoo
   }
 
   return {
-    general: {
-      error: layerErrors.errorAtPath(PATH_GENERAL),
-      label: "General",
-      icon: "Settings",
-      fields: {
-        followTf: { label: "Frame", input: "select", options: coordinateFrames, value: followTf },
-      },
-    },
-    scene: {
-      error: layerErrors.errorAtPath(PATH_SCENE),
-      label: "Scene",
-      fields: {
-        enableStats: { label: "Render stats", input: "boolean", value: config.scene.enableStats },
-        backgroundColor: { label: "Color", input: "rgb", value: backgroundColor },
-      },
-      defaultExpansionState: "collapsed",
-    },
-    cameraState: {
-      error: layerErrors.errorAtPath(PATH_CAMERA_STATE),
-      label: "Camera",
-      fields: {
-        distance: { label: "Distance", input: "number", value: cameraState.distance, step: 1 },
-        perspective: { label: "Perspective", input: "boolean", value: cameraState.perspective },
-        targetOffset: {
-          label: "Target",
-          input: "vec3",
-          labels: ["X", "Y", "Z"],
-          value: cameraState.targetOffset,
-        },
-        thetaOffset: {
-          label: "Theta",
-          input: "number",
-          value: cameraState.thetaOffset,
-          step: ONE_DEGREE,
-        },
-        phi: { label: "Phi", input: "number", value: cameraState.phi, step: ONE_DEGREE },
-        fovy: { label: "Y-Axis FOV", input: "number", value: cameraState.fovy, step: ONE_DEGREE },
-        near: {
-          label: "Near",
-          input: "number",
-          value: cameraState.near,
-          step: DEFAULT_CAMERA_STATE.near,
-        },
-        far: { label: "Far", input: "number", value: cameraState.far, step: 1 },
-      },
-      defaultExpansionState: "collapsed",
-    },
-    transforms: {
-      error: layerErrors.errorAtPath(PATH_TRANSFORMS),
-      label: "Transforms",
-      children: transformsChildren,
-      defaultExpansionState: "expanded",
-    },
-    topics: {
-      error: layerErrors.errorAtPath(PATH_TOPICS),
-      label: "Topics",
-      children: topicsChildren,
-      defaultExpansionState: "expanded",
-    },
     layers: {
       error: layerErrors.errorAtPath(PATH_LAYERS),
       label: "Custom Layers",
@@ -377,7 +202,3 @@ export function buildSettingsTree(options: SettingsTreeOptions): SettingsTreeRoo
     },
   };
 }
-
-// function sorted<T>(array: ReadonlyArray<T>, compare: (a: T, b: T) => number): Array<T> {
-//   return array.slice().sort(compare);
-// }
