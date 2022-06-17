@@ -668,19 +668,6 @@ function RawMessages(props: Props) {
                 <MenuItem value={PREV_MSG_METHOD}>{PREV_MSG_METHOD}</MenuItem>
                 <MenuItem value={CUSTOM_METHOD}>custom</MenuItem>
               </Select>
-              <Dropdown
-                value={diffMethod}
-                onChange={(newDiffMethod) => saveConfig({ diffMethod: newDiffMethod })}
-                noPortal
-                btnStyle={{ padding: "4px 10px" }}
-              >
-                <DropdownItem value={PREV_MSG_METHOD}>
-                  <span>{PREV_MSG_METHOD}</span>
-                </DropdownItem>
-                <DropdownItem value={CUSTOM_METHOD}>
-                  <span>custom</span>
-                </DropdownItem>
-              </Dropdown>
               {diffMethod === CUSTOM_METHOD ? (
                 <MessagePathInput
                   index={1}
