@@ -11,11 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { Stack } from "@mui/material";
-import { upperFirst } from "lodash";
-
-import DropdownItem from "@foxglove/studio-base/components/Dropdown/DropdownItem";
-import Dropdown from "@foxglove/studio-base/components/Dropdown/index";
+import { MenuItem, Select, SelectChangeEvent, Stack } from "@mui/material";
 
 import { SLabel, SInput } from "./common";
 
@@ -37,11 +33,6 @@ export default function CommonPointSettings({
 
   const pointShape = settings.pointShape;
   const pointShapeVal = pointShape ?? defaultPointShape;
-  const pointShapeOpts = ["circle", "square"].map((field) => (
-    <DropdownItem key={field} value={field}>
-      {upperFirst(field)}
-    </DropdownItem>
-  ));
 
   return (
     <Stack flex="auto">
@@ -61,18 +52,20 @@ export default function CommonPointSettings({
       />
 
       <SLabel>Point shape</SLabel>
-      <Dropdown
-        text={upperFirst(pointShapeVal)}
+      <Select
         value={pointShapeVal}
-        onChange={(value) => onFieldChange("pointShape", value)}
-        btnStyle={{
-          padding: "8px 12px",
-          display: "flex",
-          justifyContent: "space-between",
+        onChange={(event: SelectChangeEvent) => onFieldChange("pointShape", event.target.value)}
+        variant="filled"
+        MenuProps={{
+          disablePortal: true,
+          MenuListProps: {
+            dense: true,
+          },
         }}
       >
-        {pointShapeOpts}
-      </Dropdown>
+        <MenuItem value="circle">Circle</MenuItem>
+        <MenuItem value="square">Square</MenuItem>
+      </Select>
     </Stack>
   );
 }
