@@ -47,6 +47,7 @@ const log = Logger.getLogger(__filename);
 
 const CREATE_BITMAP_ERR = "CreateBitmap";
 
+const DEFAULT_IMAGE_WIDTH = 512;
 const DEFAULT_DISTANCE = 1;
 
 const DEFAULT_SETTINGS: LayerSettingsImage = {
@@ -271,7 +272,7 @@ export class Images extends SceneExtension<ImageRenderable> {
       const compressed = image as CompressedImage;
       const bitmapData = new Blob([image.data], { type: `image/${compressed.format}` });
       self
-        .createImageBitmap(bitmapData)
+        .createImageBitmap(bitmapData, { resizeWidth: DEFAULT_IMAGE_WIDTH })
         .then((bitmap) => {
           if (renderable.userData.texture == undefined) {
             log.debug(
