@@ -87,8 +87,8 @@ export function rgbaGradient(output: ColorRGBA, a: ColorRGBA, b: ColorRGBA, t: n
   const bG = b.g * b.a;
   const bB = b.b * b.a;
 
-  output.r = aR + (bR - aR) * t;
-  output.g = aG + (bG - aG) * t;
-  output.b = aB + (bB - aB) * t;
+  output.r = lerp(aR, bR, t);
+  output.g = lerp(aG, bG, t);
+  output.b = lerp(aB, bB, t);
   output.a = lerp(a.a, b.a, t);
 }

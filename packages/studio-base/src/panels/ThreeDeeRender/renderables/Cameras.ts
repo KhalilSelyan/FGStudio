@@ -99,13 +99,9 @@ export class Cameras extends SceneExtension<CameraInfoRenderable> {
   }
 
   handleSettingsAction = (action: SettingsTreeAction): void => {
-    if (action.action !== "update") {
-      return;
-    }
-
     const path = action.payload.path;
-    if (path.length !== 3) {
-      throw new Error(`Unrecognized path: "${path.join(`", "`)}"`);
+    if (action.action !== "update" || path.length !== 3) {
+      return;
     }
 
     this.saveSetting(path, action.payload.value);
