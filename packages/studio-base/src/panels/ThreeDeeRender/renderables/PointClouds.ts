@@ -554,8 +554,10 @@ function settingsNode(
   fields.pointSize = {
     label: "Point size",
     input: "number",
-    value: pointSize,
+    step: 1,
     placeholder: "2",
+    precision: 2,
+    value: pointSize,
   };
   fields.pointShape = {
     label: "Point shape",
@@ -566,9 +568,10 @@ function settingsNode(
   fields.decayTime = {
     label: "Decay time",
     input: "number",
-    value: decayTime,
     step: 0.5,
     placeholder: "0 seconds",
+    precision: 3,
+    value: decayTime,
   };
   fields.colorMode = {
     label: "Color mode",
@@ -640,14 +643,16 @@ function settingsNode(
     fields.minValue = {
       label: "Value min",
       input: "number",
-      value: minValue,
       placeholder: "auto",
+      precision: 4,
+      value: minValue,
     };
     fields.maxValue = {
       label: "Value max",
       input: "number",
-      value: maxValue,
       placeholder: "auto",
+      precision: 4,
+      value: maxValue,
     };
   }
 

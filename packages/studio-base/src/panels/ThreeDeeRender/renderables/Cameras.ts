@@ -29,7 +29,7 @@ import {
   RegionOfInterest,
   TIME_ZERO,
 } from "../ros";
-import { LayerSettingsCameraInfo } from "../settings";
+import { LayerSettingsCameraInfo, PRECISION_DISTANCE } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { RenderableLineList } from "./markers/RenderableLineList";
 
@@ -84,8 +84,8 @@ export class Cameras extends SceneExtension<CameraInfoRenderable> {
 
         // prettier-ignore
         const fields: SettingsTreeFields = {
-          distance: { label: "Distance", input: "number", min: 0, value: config.distance, placeholder: String(DEFAULT_DISTANCE), step: 0.1 },
-          width: { label: "Line Width", input: "number", min: 0, value: config.width, placeholder: String(DEFAULT_WIDTH), step: 0.005 },
+          distance: { label: "Distance", input: "number", min: 0, placeholder: String(DEFAULT_DISTANCE), step: 0.1, precision: PRECISION_DISTANCE, value: config.distance },
+          width: { label: "Line Width", input: "number", min: 0, placeholder: String(DEFAULT_WIDTH), step: 0.005, precision: 4, value: config.width },
           color: { label: "Color", input: "rgba", value: config.color ?? DEFAULT_COLOR_STR },
         };
 

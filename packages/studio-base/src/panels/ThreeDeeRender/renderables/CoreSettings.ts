@@ -10,6 +10,7 @@ import { SettingsTreeAction } from "@foxglove/studio-base/components/SettingsTre
 import { Renderer } from "../Renderer";
 import { SceneExtension } from "../SceneExtension";
 import { SettingsTreeEntry } from "../SettingsManager";
+import { PRECISION_DEGREES, PRECISION_DISTANCE } from "../settings";
 
 const ONE_DEGREE = Math.PI / 180;
 
@@ -70,29 +71,56 @@ export class CoreSettings extends SceneExtension {
         node: {
           label: "Camera",
           fields: {
-            distance: { label: "Distance", input: "number", step: 1, value: camera.distance },
+            distance: {
+              label: "Distance",
+              input: "number",
+              step: 1,
+              precision: PRECISION_DISTANCE,
+              value: camera.distance,
+            },
             perspective: { label: "Perspective", input: "boolean", value: camera.perspective },
             targetOffset: {
               label: "Target",
               input: "vec3",
               labels: ["X", "Y", "Z"],
+              precision: PRECISION_DISTANCE,
               value: camera.targetOffset,
             },
             thetaOffset: {
               label: "Theta",
               input: "number",
               step: ONE_DEGREE,
+              precision: PRECISION_DEGREES,
               value: camera.thetaOffset,
             },
-            phi: { label: "Phi", input: "number", step: ONE_DEGREE, value: camera.phi },
-            fovy: { label: "Y-Axis FOV", input: "number", step: ONE_DEGREE, value: camera.fovy },
+            phi: {
+              label: "Phi",
+              input: "number",
+              step: ONE_DEGREE,
+              precision: PRECISION_DEGREES,
+              value: camera.phi,
+            },
+            fovy: {
+              label: "Y-Axis FOV",
+              input: "number",
+              step: ONE_DEGREE,
+              precision: PRECISION_DEGREES,
+              value: camera.fovy,
+            },
             near: {
               label: "Near",
               input: "number",
               step: DEFAULT_CAMERA_STATE.near,
+              precision: PRECISION_DISTANCE,
               value: camera.near,
             },
-            far: { label: "Far", input: "number", step: 1, value: camera.far },
+            far: {
+              label: "Far",
+              input: "number",
+              step: 1,
+              precision: PRECISION_DISTANCE,
+              value: camera.far,
+            },
           },
           defaultExpansionState: "collapsed",
           handler,

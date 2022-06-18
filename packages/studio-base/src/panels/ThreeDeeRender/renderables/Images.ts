@@ -40,7 +40,7 @@ import {
   COMPRESSED_IMAGE_DATATYPES,
   CAMERA_INFO_DATATYPES,
 } from "../ros";
-import { LayerSettingsImage } from "../settings";
+import { LayerSettingsImage, PRECISION_DISTANCE } from "../settings";
 import { makePose } from "../transforms/geometry";
 
 const log = Logger.getLogger(__filename);
@@ -107,7 +107,7 @@ export class Images extends SceneExtension<ImageRenderable> {
         // prettier-ignore
         const fields: SettingsTreeFields = {
           cameraInfoTopic: { label: "Camera Info", input: "select", options: cameraInfoOptions, value: config.cameraInfoTopic },
-          distance: { label: "Distance", input: "number", value: config.distance, placeholder: String(DEFAULT_DISTANCE), step: 0.1 },
+          distance: { label: "Distance", input: "number", placeholder: String(DEFAULT_DISTANCE), step: 0.1, precision: PRECISION_DISTANCE, value: config.distance },
           color: { label: "Color", input: "rgba", value: config.color },
         };
 

@@ -7,10 +7,7 @@ import { Line2 } from "three/examples/jsm/lines/Line2";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 
-import {
-  SettingsTreeAction,
-  SettingsTreeFields,
-} from "@foxglove/studio-base/components/SettingsTreeEditor/types";
+import { SettingsTreeAction } from "@foxglove/studio-base/components/SettingsTreeEditor/types";
 
 import { MaterialCache, StandardColor } from "../MaterialCache";
 import { BaseUserData, Renderable } from "../Renderable";
@@ -106,15 +103,16 @@ export class FrameAxes extends SceneExtension<FrameAxisRenderable> {
     const entries: SettingsTreeEntry[] = [];
     for (const { label, value: frameId } of this.renderer.coordinateFrameList) {
       const config = (configTransforms[frameId] ?? {}) as Partial<LayerSettingsTransform>;
-      const frame = this.renderer.transformTree.frame(frameId);
-      const isRoot = frame?.isRoot();
+      // TODO(jhurliman): readonly fields and icons for root vs non-root frames
+      // const frame = this.renderer.transformTree.frame(frameId);
+      // const isRoot = frame?.isRoot();
 
-      const fields: SettingsTreeFields = {};
-      const icon = isRoot === true ? "SouthEast" : isRoot === false ? "NorthWest" : undefined;
+      // const fields: SettingsTreeFields = {};
+      // const icon = isRoot === true ? "SouthEast" : isRoot === false ? "NorthWest" : undefined;
 
       entries.push({
         path: ["transforms", frameId],
-        node: { label, icon, fields, visible: config.visible ?? true, handler },
+        node: { label, visible: config.visible ?? true, handler },
       });
     }
     return entries;

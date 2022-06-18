@@ -87,7 +87,7 @@ export class Poses extends SceneExtension<PoseRenderable> {
 
         // prettier-ignore
         const fields: SettingsTreeFields = {
-          scale: { label: "Scale", input: "vec3", labels: ["X", "Y", "Z"], step: 0.5, value: config.scale ?? DEFAULT_SCALE },
+          scale: { label: "Scale", input: "vec3", labels: ["X", "Y", "Z"], step: 0.5, precision: 3, value: config.scale ?? DEFAULT_SCALE },
           color: { label: "Color", input: "rgba", value: config.color ?? DEFAULT_COLOR_STR },
         };
 
