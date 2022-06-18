@@ -31,6 +31,7 @@ import { Images } from "./renderables/Images";
 import { Markers } from "./renderables/Markers";
 import { OccupancyGrids } from "./renderables/OccupancyGrids";
 import { PointClouds } from "./renderables/PointClouds";
+import { Polygons } from "./renderables/Polygons";
 import {
   CAMERA_INFO_DATATYPES,
   COMPRESSED_IMAGE_DATATYPES,
@@ -200,6 +201,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
     this.sceneExtensions.push(new Markers(this));
     this.sceneExtensions.push(new OccupancyGrids(this));
     this.sceneExtensions.push(new PointClouds(this));
+    this.sceneExtensions.push(new Polygons(this));
     this.sceneExtensions.push(this.cameras);
 
     for (const extension of this.sceneExtensions) {
