@@ -7,20 +7,18 @@ import {
   SettingsTreeAction,
   SettingsTreeFields,
 } from "@foxglove/studio-base/components/SettingsTreeEditor/types";
-import { BaseUserData, Renderable } from "@foxglove/studio-base/panels/ThreeDeeRender/Renderable";
-import {
-  RawMessageEvent,
-  SceneExtension,
-} from "@foxglove/studio-base/panels/ThreeDeeRender/SceneExtension";
-import { SettingsTreeEntry } from "@foxglove/studio-base/panels/ThreeDeeRender/SettingsManager";
-import { normalizePolygonStamped } from "@foxglove/studio-base/panels/ThreeDeeRender/normalizeMessages";
 
+import { BaseUserData, Renderable } from "../Renderable";
 import { Renderer } from "../Renderer";
+import { RawMessage, RawMessageEvent, SceneExtension } from "../SceneExtension";
+import { SettingsTreeEntry } from "../SettingsManager";
 import { makeRgba, rgbaToCssString, stringToRgba } from "../color";
+import { normalizeHeader, normalizeVector3s } from "../normalizeMessages";
 import {
   Marker,
   MarkerAction,
   MarkerType,
+  Polygon,
   PolygonStamped,
   POLYGON_STAMPED_DATATYPES,
   TIME_ZERO,
@@ -202,4 +200,17 @@ function createLineStripMarker(
     mesh_use_embedded_materials: false,
   };
   return linesMarker;
+}
+
+function normalizePolygon(polygon: RawMessage<Polygon> | undefined): Polygon {
+  return {
+    points: normalizeVector3s(polygon?.points),
+  };
+}
+
+function normalizePolygonStamped(polygon: RawMessage<PolygonStamped>): PolygonStamped {
+  return {
+    header: normalizeHeader(polygon.header),
+    polygon: normalizePolygon(polygon.polygon),
+  };
 }

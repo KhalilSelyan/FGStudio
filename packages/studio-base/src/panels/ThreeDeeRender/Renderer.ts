@@ -114,7 +114,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
   config: Immutable<ThreeDeeRenderConfig>;
   settings = new SettingsManager(baseSettingsTree());
   topics: ReadonlyArray<Topic> | undefined;
-  sceneExtensions: SceneExtension[] = [];
+  sceneExtensions = new Map<string, SceneExtension>();
   datatypeHandlers = new Map<string, MessageHandler[]>();
   scene: THREE.Scene;
   dirLight: THREE.DirectionalLight;
@@ -134,17 +134,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
   renderFrameId: string | undefined;
   settingsNodeProviders = new Map<LayerType, SettingsNodeProvider>();
 
-  cameras: Cameras;
-
   labels = new Labels(this);
-  // frameAxes = new FrameAxes(this);
-  // occupancyGrids = new OccupancyGrids(this);
-  // pointClouds = new PointClouds(this);
-  // markers = new Markers(this);
-  // polygons = new Polygons(this);
-  // poses = new Poses(this);
-  // images = new Images(this);
-  // grids = new Grids(this);
 
   constructor(canvas: HTMLCanvasElement, config: ThreeDeeRenderConfig) {
     super();
@@ -185,30 +175,6 @@ export class Renderer extends EventEmitter<RendererEvents> {
 
     this.scene = new THREE.Scene();
     this.scene.add(this.labels);
-    // this.scene.add(this.frameAxes);
-    // this.scene.add(this.occupancyGrids);
-    // this.scene.add(this.pointClouds);
-    // this.scene.add(this.markers);
-    // this.scene.add(this.polygons);
-    // this.scene.add(this.poses);
-    // this.scene.add(this.images);
-    // this.scene.add(this.grids);
-
-    this.cameras = new Cameras(this);
-
-    this.sceneExtensions.push(new CoreSettings(this));
-    this.sceneExtensions.push(new FrameAxes(this));
-    this.sceneExtensions.push(new Images(this));
-    this.sceneExtensions.push(new Markers(this));
-    this.sceneExtensions.push(new OccupancyGrids(this));
-    this.sceneExtensions.push(new PointClouds(this));
-    this.sceneExtensions.push(new Polygons(this));
-    this.sceneExtensions.push(new Poses(this));
-    this.sceneExtensions.push(this.cameras);
-
-    for (const extension of this.sceneExtensions) {
-      this.scene.add(extension);
-    }
 
     this.dirLight = new THREE.DirectionalLight();
     this.dirLight.position.set(1, 1, 1);
@@ -249,24 +215,38 @@ export class Renderer extends EventEmitter<RendererEvents> {
     const renderSize = this.gl.getDrawingBufferSize(tempVec2);
     log.debug(`Initialized ${renderSize.width}x${renderSize.height} renderer (${samples}x MSAA)`);
 
+    this.addSceneExtension(new CoreSettings(this));
+    this.addSceneExtension(new Cameras(this));
+    this.addSceneExtension(new FrameAxes(this));
+    this.addSceneExtension(new Images(this));
+    this.addSceneExtension(new Markers(this));
+    this.addSceneExtension(new OccupancyGrids(this));
+    this.addSceneExtension(new PointClouds(this));
+    this.addSceneExtension(new Polygons(this));
+    this.addSceneExtension(new Poses(this));
+
     this.animationFrame();
   }
 
   dispose(): void {
     this.removeAllListeners();
 
-    for (const extension of this.sceneExtensions) {
+    for (const extension of this.sceneExtensions.values()) {
       extension.dispose();
     }
-    this.sceneExtensions.length = 0;
+    this.sceneExtensions.clear();
 
     this.picker.dispose();
     this.input.dispose();
-    // this.frameAxes.dispose();
-    // this.occupancyGrids.dispose();
-    // this.pointClouds.dispose();
-    // this.markers.dispose();
     this.gl.dispose();
+  }
+
+  addSceneExtension(extension: SceneExtension): void {
+    if (this.sceneExtensions.has(extension.extensionId)) {
+      throw new Error(`Attempted to add duplicate extensionId "${extension.extensionId}"`);
+    }
+    this.sceneExtensions.set(extension.extensionId, extension);
+    this.scene.add(extension);
   }
 
   updateConfig(updateHandler: (draft: ThreeDeeRenderConfig) => void): void {
@@ -279,7 +259,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
     this.topics = topics;
     if (changed) {
       // Rebuild the settings nodes for all scene extensions
-      for (const extension of this.sceneExtensions) {
+      for (const extension of this.sceneExtensions.values()) {
         this.settings.setNodesForKey(extension.extensionId, extension.settingsNodes());
       }
     }
@@ -332,7 +312,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
 
     const bgColor = backgroundColor ? stringToRgb(tempColor, backgroundColor) : undefined;
 
-    for (const extension of this.sceneExtensions) {
+    for (const extension of this.sceneExtensions.values()) {
       extension.setColorScheme(colorScheme, bgColor);
     }
 
@@ -351,7 +331,6 @@ export class Renderer extends EventEmitter<RendererEvents> {
 
   addMessageEvent(messageEvent: Readonly<MessageEvent<unknown>>, datatype: string): void {
     const { message } = messageEvent;
-    // const receiveTime = toNanoSec(messageEvent.receiveTime);
 
     // If this message has a Header, scrape the frame_id from it
     const maybeHasHeader = message as Partial<{ header: Partial<Header> }>;
@@ -371,47 +350,6 @@ export class Renderer extends EventEmitter<RendererEvents> {
       const tf = normalizeTransformStamped(message as DeepPartial<TransformStamped>);
       this.addTransformMessage(tf);
     }
-    // } else if (MARKER_ARRAY_DATATYPES.has(datatype)) {
-    //   // visualization_msgs/MarkerArray - Ingest the list of markers
-    //   const markerArray = message as DeepPartial<MarkerArray>;
-    //   for (const markerMsg of markerArray.markers ?? []) {
-    //     const marker = normalizeMarker(markerMsg);
-    //     this.markers.addMarkerMessage(topic, marker, receiveTime);
-    //   }
-    // } else if (MARKER_DATATYPES.has(datatype)) {
-    //   // visualization_msgs/Marker - Ingest this single marker
-    //   const marker = normalizeMarker(message as DeepPartial<Marker>);
-    //   this.markers.addMarkerMessage(topic, marker, receiveTime);
-    // } else if (OCCUPANCY_GRID_DATATYPES.has(datatype)) {
-    //   // nav_msgs/OccupancyGrid - Ingest this occupancy grid
-    //   const occupancyGrid = message as OccupancyGrid;
-    //   this.occupancyGrids.addOccupancyGridMessage(topic, occupancyGrid);
-    // } else if (POINTCLOUD_DATATYPES.has(datatype)) {
-    //   // sensor_msgs/PointCloud2 - Ingest this point cloud
-    //   const pointCloud = message as PointCloud2;
-    //   this.pointClouds.addPointCloud2Message(topic, pointCloud);
-    // } else if (POSE_STAMPED_DATATYPES.has(datatype)) {
-    //   const poseStamped = normalizePoseStamped(message as DeepPartial<PoseStamped>);
-    //   this.poses.addPoseMessage(topic, poseStamped);
-    // } else if (POSE_WITH_COVARIANCE_STAMPED_DATATYPES.has(datatype)) {
-    //   const poseWithCovariance = normalizePoseWithCovarianceStamped(
-    //     message as DeepPartial<PoseWithCovarianceStamped>,
-    //   );
-    //   this.poses.addPoseMessage(topic, poseWithCovariance);
-    // } else if (POLYGON_STAMPED_DATATYPES.has(datatype)) {
-    //   const polygonStamped = normalizePolygonStamped(message as DeepPartial<PolygonStamped>);
-    //   this.polygons.addPolygonStamped(topic, polygonStamped);
-    // } else if (CAMERA_INFO_DATATYPES.has(datatype)) {
-    //   const cameraInfo = normalizeCameraInfo(message as DeepPartial<CameraInfo>);
-    //   // this.cameras.addCameraInfoMessage(topic, cameraInfo);
-    //   this.images.addCameraInfoMessage(topic, cameraInfo);
-    // } else if (IMAGE_DATATYPES.has(datatype)) {
-    //   const image = normalizeImage(message as DeepPartial<Image>);
-    //   this.images.addImageMessage(topic, image);
-    // } else if (COMPRESSED_IMAGE_DATATYPES.has(datatype)) {
-    //   const compressedImage = normalizeCompressedImage(message as DeepPartial<CompressedImage>);
-    //   this.images.addImageMessage(topic, compressedImage);
-    // }
 
     const handlers = this.datatypeHandlers.get(datatype);
     if (handlers) {
@@ -457,52 +395,6 @@ export class Renderer extends EventEmitter<RendererEvents> {
     }
   }
 
-  // setTransformSettings(frameId: string, settings: Partial<LayerSettingsTransform>): void {
-  //   this.frameAxes.setTransformSettings(frameId, settings);
-  // }
-
-  // setOccupancyGridSettings(topic: string, settings: Partial<LayerSettingsOccupancyGrid>): void {
-  //   this.occupancyGrids.setTopicSettings(topic, settings);
-  // }
-
-  // setPointCloud2Settings(topic: string, settings: Partial<LayerSettingsPointCloud2>): void {
-  //   this.pointClouds.setTopicSettings(topic, settings);
-  // }
-
-  // setMarkerSettings(topic: string, settings: Record<string, unknown>): void {
-  //   // Convert the { visible, ns:a, ns:b, ... } format to { visible, namespaces: { a, b, ... } }
-  //   const topicSettings: DeepPartial<LayerSettingsMarker> = { namespaces: {} };
-  //   topicSettings.visible = settings.visible as boolean | undefined;
-  //   for (const [key, value] of Object.entries(settings)) {
-  //     if (key.startsWith("ns:")) {
-  //       const ns = key.substring(3);
-  //       topicSettings.namespaces![ns] = value as Partial<LayerSettingsMarkerNamespace>;
-  //     }
-  //   }
-
-  //   this.markers.setTopicSettings(topic, topicSettings);
-  // }
-
-  // setPolygonSettings(topic: string, settings: Partial<LayerSettingsPolygon>): void {
-  //   this.polygons.setTopicSettings(topic, settings);
-  // }
-
-  // setPoseSettings(topic: string, settings: Partial<LayerSettingsPose>): void {
-  //   this.poses.setTopicSettings(topic, settings);
-  // }
-
-  // setCameraInfoSettings(_topic: string, _settings: Partial<LayerSettingsCameraInfo>): void {
-  //   // this.cameras.setTopicSettings(topic, settings);
-  // }
-
-  // setImageSettings(topic: string, settings: Partial<LayerSettingsImage>): void {
-  //   this.images.setTopicSettings(topic, settings);
-  // }
-
-  // setGridSettings(id: string, settings: Partial<LayerSettingsGrid> | undefined): void {
-  //   this.grids.setLayerSettings(id, settings);
-  // }
-
   // Callback handlers
 
   animationFrame = (): void => {
@@ -527,17 +419,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
       return;
     }
 
-    // this.frameAxes.startFrame(currentTime);
-    // this.occupancyGrids.startFrame(currentTime);
-    // this.pointClouds.startFrame(currentTime);
-    // this.markers.startFrame(currentTime);
-    // this.polygons.startFrame(currentTime);
-    // this.poses.startFrame(currentTime);
-    // this.cameras.startFrame(currentTime);
-    // this.images.startFrame(currentTime);
-    // this.grids.startFrame(currentTime);
-
-    for (const sceneExtension of this.sceneExtensions) {
+    for (const sceneExtension of this.sceneExtensions.values()) {
       sceneExtension.startFrame(currentTime, renderFrameId, fixedFrameId);
     }
 
@@ -717,7 +599,6 @@ function baseSettingsTree(): SettingsTreeRoots {
     layers: {
       label: "Custom Layers",
       defaultExpansionState: "expanded",
-      // actions: [{ type: "action", id: "add-grid " + uuidv4(), label: "Add Grid", icon: "Grid" }],
     },
   };
 }

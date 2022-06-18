@@ -2,26 +2,20 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { DeepPartial } from "ts-essentials";
+import type { Time } from "@foxglove/rostime";
 
-import { Time } from "@foxglove/rostime";
-
-import {
+import type { RawMessage } from "./SceneExtension";
+import type {
   ColorRGBA,
   Header,
   Matrix6,
-  Polygon,
-  PolygonStamped,
-  PoseStamped,
-  PoseWithCovariance,
-  PoseWithCovarianceStamped,
   Quaternion,
   TFMessage,
   Transform,
   TransformStamped,
   Vector3,
 } from "./ros";
-import { Pose } from "./transforms/geometry";
+import type { Pose } from "./transforms/geometry";
 
 export function normalizeTime(time: Partial<Time> | undefined): Time {
   if (!time) {
@@ -51,16 +45,6 @@ export function normalizeInt8Array(int8Array: unknown): Int8Array {
     return new Int8Array(int8Array);
   } else {
     return new Int8Array(0);
-  }
-}
-
-export function normalizeImageData(data: unknown): Int8Array | Uint8Array {
-  if (data == undefined) {
-    return new Uint8Array(0);
-  } else if (data instanceof Int8Array || data instanceof Uint8Array) {
-    return data;
-  } else {
-    return new Uint8Array(0);
   }
 }
 
@@ -115,27 +99,14 @@ export function normalizeColorRGBAs(colors: Partial<ColorRGBA>[] | undefined): C
   return colors.map(normalizeColorRGBA);
 }
 
-export function normalizePose(pose: DeepPartial<Pose> | undefined): Pose {
+export function normalizePose(pose: RawMessage<Pose> | undefined): Pose {
   return {
     position: normalizeVector3(pose?.position),
     orientation: normalizeQuaternion(pose?.orientation),
   };
 }
 
-export function normalizePolygon(polygon: DeepPartial<Polygon> | undefined): Polygon {
-  return {
-    points: normalizeVector3s(polygon?.points),
-  };
-}
-
-export function normalizePoseWithCovariance(
-  pose: DeepPartial<PoseWithCovariance> | undefined,
-): PoseWithCovariance {
-  const covariance = normalizeMatrix6(pose?.covariance as number[] | undefined);
-  return { pose: normalizePose(pose?.pose), covariance };
-}
-
-export function normalizeHeader(header: DeepPartial<Header> | undefined): Header {
+export function normalizeHeader(header: RawMessage<Header> | undefined): Header {
   return {
     frame_id: header?.frame_id ?? "",
     stamp: normalizeTime(header?.stamp),
@@ -143,7 +114,7 @@ export function normalizeHeader(header: DeepPartial<Header> | undefined): Header
   };
 }
 
-export function normalizeTransform(transform: DeepPartial<Transform> | undefined): Transform {
+export function normalizeTransform(transform: RawMessage<Transform> | undefined): Transform {
   return {
     translation: normalizeVector3(transform?.translation),
     rotation: normalizeQuaternion(transform?.rotation),
@@ -151,7 +122,7 @@ export function normalizeTransform(transform: DeepPartial<Transform> | undefined
 }
 
 export function normalizeTransformStamped(
-  transform: DeepPartial<TransformStamped> | undefined,
+  transform: RawMessage<TransformStamped> | undefined,
 ): TransformStamped {
   return {
     header: normalizeHeader(transform?.header),
@@ -160,31 +131,8 @@ export function normalizeTransformStamped(
   };
 }
 
-export function normalizeTFMessage(tfMessage: DeepPartial<TFMessage> | undefined): TFMessage {
+export function normalizeTFMessage(tfMessage: RawMessage<TFMessage> | undefined): TFMessage {
   return {
     transforms: (tfMessage?.transforms ?? []).map(normalizeTransformStamped),
-  };
-}
-
-export function normalizePoseStamped(pose: DeepPartial<PoseStamped>): PoseStamped {
-  return {
-    header: normalizeHeader(pose.header),
-    pose: normalizePose(pose.pose),
-  };
-}
-
-export function normalizePolygonStamped(polygon: DeepPartial<PolygonStamped>): PolygonStamped {
-  return {
-    header: normalizeHeader(polygon.header),
-    polygon: normalizePolygon(polygon.polygon),
-  };
-}
-
-export function normalizePoseWithCovarianceStamped(
-  message: DeepPartial<PoseWithCovarianceStamped>,
-): PoseWithCovarianceStamped {
-  return {
-    header: normalizeHeader(message.header),
-    pose: normalizePoseWithCovariance(message.pose),
   };
 }

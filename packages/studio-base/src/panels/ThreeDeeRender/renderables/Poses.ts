@@ -12,10 +12,10 @@ import {
 
 import { BaseUserData, Renderable } from "../Renderable";
 import { Renderer } from "../Renderer";
-import { RawMessageEvent, SceneExtension } from "../SceneExtension";
+import { RawMessage, RawMessageEvent, SceneExtension } from "../SceneExtension";
 import { SettingsTreeEntry } from "../SettingsManager";
 import { makeRgba, rgbaToCssString, stringToRgba } from "../color";
-import { normalizePoseStamped, normalizePoseWithCovarianceStamped } from "../normalizeMessages";
+import { normalizeHeader, normalizeMatrix6, normalizePose } from "../normalizeMessages";
 import {
   Marker,
   PoseWithCovarianceStamped,
@@ -25,6 +25,7 @@ import {
   MarkerType,
   TIME_ZERO,
   POSE_STAMPED_DATATYPES,
+  PoseWithCovariance,
 } from "../ros";
 import { LayerSettingsPose } from "../settings";
 import { makePose, Pose } from "../transforms/geometry";
@@ -308,5 +309,28 @@ function createSphereMarker(
     text: "",
     mesh_resource: "",
     mesh_use_embedded_materials: false,
+  };
+}
+
+function normalizePoseStamped(pose: RawMessage<PoseStamped>): PoseStamped {
+  return {
+    header: normalizeHeader(pose.header),
+    pose: normalizePose(pose.pose),
+  };
+}
+
+function normalizePoseWithCovariance(
+  pose: RawMessage<PoseWithCovariance> | undefined,
+): PoseWithCovariance {
+  const covariance = normalizeMatrix6(pose?.covariance as number[] | undefined);
+  return { pose: normalizePose(pose?.pose), covariance };
+}
+
+function normalizePoseWithCovarianceStamped(
+  message: RawMessage<PoseWithCovarianceStamped>,
+): PoseWithCovarianceStamped {
+  return {
+    header: normalizeHeader(message.header),
+    pose: normalizePoseWithCovariance(message.pose),
   };
 }

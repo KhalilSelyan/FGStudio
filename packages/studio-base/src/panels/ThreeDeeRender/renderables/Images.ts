@@ -31,7 +31,7 @@ import { Renderer } from "../Renderer";
 import { RawMessage, RawMessageEvent, SceneExtension } from "../SceneExtension";
 import { SettingsTreeEntry } from "../SettingsManager";
 import { stringToRgba } from "../color";
-import { normalizeByteArray, normalizeHeader, normalizeImageData } from "../normalizeMessages";
+import { normalizeByteArray, normalizeHeader } from "../normalizeMessages";
 import {
   CameraInfo,
   Image,
@@ -42,6 +42,7 @@ import {
 } from "../ros";
 import { LayerSettingsImage, PRECISION_DISTANCE } from "../settings";
 import { makePose } from "../transforms/geometry";
+import { CameraInfoUserData } from "./Cameras";
 
 const log = Logger.getLogger(__filename);
 
@@ -216,6 +217,12 @@ export class Images extends SceneExtension<ImageRenderable> {
     }
   };
 
+  private _camerasExtension() {
+    return this.renderer.sceneExtensions.get("foxglove.Cameras") as
+      | SceneExtension<Renderable<CameraInfoUserData>>
+      | undefined;
+  }
+
   private _updateImageRenderable(
     renderable: ImageRenderable,
     image: Image | CompressedImage,
@@ -247,7 +254,7 @@ export class Images extends SceneExtension<ImageRenderable> {
 
     // Create the plane geometry if needed
     if (settings?.cameraInfoTopic != undefined && renderable.userData.geometry == undefined) {
-      const cameraRenderable = this.renderer.cameras.renderables.get(settings.cameraInfoTopic);
+      const cameraRenderable = this._camerasExtension()?.renderables.get(settings.cameraInfoTopic);
       const cameraModel = cameraRenderable?.userData.cameraModel;
       if (cameraModel) {
         log.debug(
@@ -544,6 +551,16 @@ function rawImageToDataTexture(
       break;
     default:
       throw new Error(`Unsupported encoding ${encoding}`);
+  }
+}
+
+function normalizeImageData(data: unknown): Int8Array | Uint8Array {
+  if (data == undefined) {
+    return new Uint8Array(0);
+  } else if (data instanceof Int8Array || data instanceof Uint8Array) {
+    return data;
+  } else {
+    return new Uint8Array(0);
   }
 }
 
