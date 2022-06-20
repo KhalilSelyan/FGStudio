@@ -84,7 +84,7 @@ export class CoreSettings extends SceneExtension {
               input: "vec3",
               labels: ["X", "Y", "Z"],
               precision: PRECISION_DISTANCE,
-              value: camera.targetOffset,
+              value: [...camera.targetOffset],
             },
             thetaOffset: {
               label: "Theta",
