@@ -215,6 +215,12 @@ const DisabledSettings: SettingsTreeRoots = {
         options: ["One", "Two"],
         disabled: true,
       },
+      vec2: {
+        input: "vec2",
+        label: "Vec2",
+        value: [1, 2],
+        disabled: true,
+      },
       vec3: {
         input: "vec3",
         label: "Vec3",
@@ -295,6 +301,12 @@ const ReadonlySettings: SettingsTreeRoots = {
         options: ["One", "Two"],
         readonly: true,
       },
+      vec2: {
+        input: "vec2",
+        label: "Vec2",
+        value: [1, 2],
+        readonly: true,
+      },
       vec3: {
         input: "vec3",
         label: "Vec3",
@@ -311,6 +323,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Map",
     icon: "Map",
     renamable: true,
+    order: 3,
     fields: {
       message_path: {
         label: "Message path",
@@ -355,6 +368,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Grid",
     icon: "Grid",
     renamable: true,
+    order: 2,
     fields: {
       color: {
         label: "Color",
@@ -385,6 +399,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Pose",
     icon: "Walk",
     renamable: true,
+    order: 1,
     fields: {
       color: { label: "Color", value: "#ffffff", input: "rgb" },
       shaft_length: { label: "Shaft length", value: 1.5, input: "number" },
