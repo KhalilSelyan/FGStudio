@@ -260,13 +260,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       return;
     }
     log.debug(`Subscribing to [${topicsToSubscribe.join(", ")}]`);
-
-    context.subscribe(
-      topicsToSubscribe.map((topic) => ({
-        topic,
-        preload: false,
-      })),
-    );
+    context.subscribe(topicsToSubscribe.map((topic) => ({ topic, preload: false })));
   }, [context, topicsToSubscribe]);
 
   // Keep the renderer currentTime up to date
