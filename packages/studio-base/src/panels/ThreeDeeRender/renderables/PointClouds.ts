@@ -22,7 +22,7 @@ import { rgbaToCssString, stringToRgba } from "../color";
 import { normalizeByteArray, normalizeHeader } from "../normalizeMessages";
 import { PointCloud2, POINTCLOUD_DATATYPES, PointField, PointFieldType } from "../ros";
 import { BaseSettings } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose } from "../transforms";
 import { getColorConverter } from "./pointClouds/colors";
 import { FieldReader, getReader } from "./pointClouds/fieldReaders";
 

@@ -8,7 +8,7 @@ import { LabelRenderable } from "../../Labels";
 import type { Renderer } from "../../Renderer";
 import { rgbaEqual } from "../../color";
 import { Marker } from "../../ros";
-import { poseApproxEq } from "../../transforms/geometry";
+import { poseApproxEq } from "../../transforms";
 import { RenderableMarker } from "./RenderableMarker";
 
 const QUAT_IDENTITY = { x: 0, y: 0, z: 0, w: 1 };

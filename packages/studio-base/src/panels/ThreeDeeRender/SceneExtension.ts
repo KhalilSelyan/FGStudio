@@ -15,8 +15,6 @@ import type { SettingsTreeEntry } from "./SettingsManager";
 import { missingTransformMessage, MISSING_TRANSFORM } from "./renderables/transforms";
 import { updatePose } from "./updatePose";
 
-export { set as setByPath };
-
 export type RawMessage<T> = DeepPartial<T>;
 
 export type RawMessageEvent<T> = MessageEvent<DeepPartial<T>>;

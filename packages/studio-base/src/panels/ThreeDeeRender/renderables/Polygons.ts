@@ -24,7 +24,7 @@ import {
   TIME_ZERO,
 } from "../ros";
 import { BaseSettings } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose } from "../transforms";
 import { RenderableLineStrip } from "./markers/RenderableLineStrip";
 
 export type LayerSettingsPolygon = BaseSettings & {

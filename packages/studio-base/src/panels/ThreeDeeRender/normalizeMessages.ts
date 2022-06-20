@@ -15,7 +15,7 @@ import type {
   TransformStamped,
   Vector3,
 } from "./ros";
-import type { Pose } from "./transforms/geometry";
+import type { Pose } from "./transforms";
 
 export function normalizeTime(time: Partial<Time> | undefined): Time {
   if (!time) {

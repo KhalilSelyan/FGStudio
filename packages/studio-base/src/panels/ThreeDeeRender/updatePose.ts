@@ -4,8 +4,7 @@
 
 import * as THREE from "three";
 
-import { TransformTree } from "./transforms/TransformTree";
-import { makePose, Pose } from "./transforms/geometry";
+import { TransformTree, makePose, Pose } from "./transforms";
 
 const tempPose = makePose();
 

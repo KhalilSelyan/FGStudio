@@ -16,7 +16,7 @@ import { stringToRgba } from "../color";
 import { vec3TupleApproxEquals } from "../math";
 import { Marker, TIME_ZERO, Vector3 } from "../ros";
 import { CustomLayerSettings, PRECISION_DEGREES, PRECISION_DISTANCE } from "../settings";
-import { makePose, xyzrpyToPose } from "../transforms/geometry";
+import { makePose, xyzrpyToPose } from "../transforms";
 import { RenderableLineList } from "./markers/RenderableLineList";
 
 const log = Logger.getLogger(__filename);

@@ -30,7 +30,7 @@ import {
   TIME_ZERO,
 } from "../ros";
 import { BaseSettings, PRECISION_DISTANCE } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose } from "../transforms";
 import { RenderableLineList } from "./markers/RenderableLineList";
 
 const log = Logger.getLogger(__filename);

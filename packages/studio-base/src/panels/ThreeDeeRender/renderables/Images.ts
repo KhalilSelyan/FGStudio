@@ -41,7 +41,7 @@ import {
   CAMERA_INFO_DATATYPES,
 } from "../ros";
 import { BaseSettings, PRECISION_DISTANCE } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose } from "../transforms";
 import { CameraInfoUserData } from "./Cameras";
 
 const log = Logger.getLogger(__filename);

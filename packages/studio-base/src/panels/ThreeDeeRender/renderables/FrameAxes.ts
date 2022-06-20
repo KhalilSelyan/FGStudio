@@ -16,7 +16,7 @@ import { SceneExtension } from "../SceneExtension";
 import { SettingsTreeEntry } from "../SettingsManager";
 import { arrowHeadSubdivisions, arrowShaftSubdivisions, DetailLevel } from "../lod";
 import { BaseSettings } from "../settings";
-import { makePose } from "../transforms/geometry";
+import { makePose } from "../transforms";
 import { linePickingMaterial, releaseLinePickingMaterial } from "./markers/materials";
 
 export type LayerSettingsTransform = BaseSettings;

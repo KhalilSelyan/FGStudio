@@ -2,9 +2,9 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Time } from "@foxglove/rostime";
+import type { Time } from "@foxglove/rostime";
 
-import { Pose } from "./transforms/geometry";
+import type { Pose } from "./transforms";
 
 export type Matrix3 = [number, number, number, number, number, number, number, number, number];
 

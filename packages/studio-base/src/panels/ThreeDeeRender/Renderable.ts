@@ -6,7 +6,7 @@ import * as THREE from "three";
 
 import type { Renderer } from "./Renderer";
 import type { BaseSettings } from "./settings";
-import type { Pose } from "./transforms/geometry";
+import type { Pose } from "./transforms";
 
 export type BaseUserData = {
   receiveTime: bigint;

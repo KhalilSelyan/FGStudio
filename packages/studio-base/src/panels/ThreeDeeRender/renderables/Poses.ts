@@ -28,7 +28,7 @@ import {
   PoseWithCovariance,
 } from "../ros";
 import { BaseSettings } from "../settings";
-import { makePose, Pose } from "../transforms/geometry";
+import { makePose, Pose } from "../transforms";
 import { RenderableArrow } from "./markers/RenderableArrow";
 import { RenderableSphere } from "./markers/RenderableSphere";
 
