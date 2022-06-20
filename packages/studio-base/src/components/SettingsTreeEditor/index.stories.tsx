@@ -215,6 +215,12 @@ const DisabledSettings: SettingsTreeRoots = {
         options: ["One", "Two"],
         disabled: true,
       },
+      vec2: {
+        input: "vec2",
+        label: "Vec2",
+        value: [1, 2],
+        disabled: true,
+      },
       vec3: {
         input: "vec3",
         label: "Vec3",
@@ -236,41 +242,41 @@ const ReadonlySettings: SettingsTreeRoots = {
         label: "Autocomplete",
         items: ["one", "two"],
         value: "one",
-        readOnly: true,
+        readonly: true,
       },
       boolean: {
         input: "boolean",
         label: "Boolean",
-        readOnly: true,
+        readonly: true,
       },
       gradient: {
         input: "gradient",
         label: "Gradient",
         value: ["#ffffff", "#000000"],
-        readOnly: true,
+        readonly: true,
       },
       messagePath: {
         input: "messagepath",
         label: "Message Path",
-        readOnly: true,
+        readonly: true,
       },
       number: {
         input: "number",
         label: "Number",
         value: 123,
-        readOnly: true,
+        readonly: true,
       },
       rgb: {
         input: "rgb",
         label: "RGB",
         value: "#0000ff",
-        readOnly: true,
+        readonly: true,
       },
       rgba: {
         input: "rgba",
         label: "RGBA",
         value: "#0000ff88",
-        readOnly: true,
+        readonly: true,
       },
       select: {
         input: "select",
@@ -280,26 +286,32 @@ const ReadonlySettings: SettingsTreeRoots = {
           { label: "Two", value: "two" },
         ],
         value: "one",
-        readOnly: true,
+        readonly: true,
       },
       text: {
         input: "string",
         label: "Text",
         value: "text",
-        readOnly: true,
+        readonly: true,
       },
       toggle: {
         input: "toggle",
         label: "Toggle",
         value: "One",
         options: ["One", "Two"],
-        readOnly: true,
+        readonly: true,
+      },
+      vec2: {
+        input: "vec2",
+        label: "Vec2",
+        value: [1, 2],
+        readonly: true,
       },
       vec3: {
         input: "vec3",
         label: "Vec3",
         value: [1, 2, 3],
-        readOnly: true,
+        readonly: true,
       },
     },
     children: {},
@@ -311,6 +323,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Map",
     icon: "Map",
     renamable: true,
+    order: 3,
     fields: {
       message_path: {
         label: "Message path",
@@ -355,6 +368,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Grid",
     icon: "Grid",
     renamable: true,
+    order: 2,
     fields: {
       color: {
         label: "Color",
@@ -385,6 +399,7 @@ const PanelExamplesSettings: SettingsTreeRoots = {
     label: "Pose",
     icon: "Walk",
     renamable: true,
+    order: 1,
     fields: {
       color: { label: "Color", value: "#ffffff", input: "rgb" },
       shaft_length: { label: "Shaft length", value: 1.5, input: "number" },

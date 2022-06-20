@@ -23,7 +23,7 @@ import { v4 as uuid } from "uuid";
 import MessagePathInput from "@foxglove/studio-base/components/MessagePathSyntax/MessagePathInput";
 import Stack from "@foxglove/studio-base/components/Stack";
 
-import { ColorPickerInput, ColorGradientInput, NumberInput, Vec3Input } from "./inputs";
+import { ColorPickerInput, ColorGradientInput, NumberInput, Vec3Input, Vec2Input } from "./inputs";
 import { SettingsTreeAction, SettingsTreeField } from "./types";
 
 // Used to both undefined and empty string in select inputs.
@@ -123,7 +123,7 @@ function FieldInput({
           freeSolo={true}
           value={field.value}
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           ListboxComponent={List}
           ListboxProps={{ dense: true } as Partial<ListProps>}
           renderOption={(props, option, { selected }) => (
@@ -153,7 +153,7 @@ function FieldInput({
           variant="filled"
           value={field.value}
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           placeholder={field.placeholder}
           fullWidth
           max={field.max}
@@ -174,7 +174,7 @@ function FieldInput({
           disabled={field.disabled}
           size="small"
           onChange={(_event, value) => {
-            if (field.readOnly !== true) {
+            if (field.readonly !== true) {
               actionHandler({ action: "update", payload: { path, input: "toggle", value } });
             }
           }}
@@ -196,7 +196,7 @@ function FieldInput({
           value={field.value ?? ""}
           placeholder={field.placeholder}
           InputProps={{
-            readOnly: field.readOnly,
+            readOnly: field.readonly,
           }}
           onChange={(event) =>
             actionHandler({
@@ -215,7 +215,7 @@ function FieldInput({
           disabled={field.disabled}
           size="small"
           onChange={(_event, value) => {
-            if (value != undefined && field.readOnly !== true) {
+            if (value != undefined && field.readonly !== true) {
               actionHandler({
                 action: "update",
                 payload: { path, input: "boolean", value },
@@ -232,7 +232,7 @@ function FieldInput({
         <ColorPickerInput
           alphaType="none"
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           placeholder={field.placeholder}
           value={field.value?.toString()}
           onChange={(value) =>
@@ -248,7 +248,7 @@ function FieldInput({
         <ColorPickerInput
           alphaType="alpha"
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           placeholder={field.placeholder}
           value={field.value?.toString()}
           onChange={(value) =>
@@ -265,7 +265,7 @@ function FieldInput({
           <MessagePathInput
             path={field.value ?? ""}
             disabled={field.disabled}
-            readOnly={field.readOnly}
+            readOnly={field.readonly}
             onChange={(value) =>
               actionHandler({
                 action: "update",
@@ -283,7 +283,7 @@ function FieldInput({
           displayEmpty
           fullWidth
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           variant="filled"
           value={field.value ?? UNDEFINED_SENTINEL_VALUE}
           onChange={(event) =>
@@ -293,7 +293,9 @@ function FieldInput({
                 path,
                 input: "select",
                 value:
-                  event.target.value === UNDEFINED_SENTINEL_VALUE ? undefined : event.target.value,
+                  event.target.value === UNDEFINED_SENTINEL_VALUE
+                    ? undefined
+                    : (event.target.value as undefined | string | string[]),
               },
             })
           }
@@ -311,7 +313,7 @@ function FieldInput({
         <ColorGradientInput
           colors={field.value}
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           onChange={(value) =>
             actionHandler({ action: "update", payload: { path, input: "gradient", value } })
           }
@@ -324,9 +326,22 @@ function FieldInput({
           value={field.value}
           precision={field.precision}
           disabled={field.disabled}
-          readOnly={field.readOnly}
+          readOnly={field.readonly}
           onChange={(value) =>
             actionHandler({ action: "update", payload: { path, input: "vec3", value } })
+          }
+        />
+      );
+    case "vec2":
+      return (
+        <Vec2Input
+          step={field.step}
+          value={field.value}
+          precision={field.precision}
+          disabled={field.disabled}
+          readOnly={field.readonly}
+          onChange={(value) =>
+            actionHandler({ action: "update", payload: { path, input: "vec2", value } })
           }
         />
       );
@@ -334,7 +349,37 @@ function FieldInput({
 }
 
 function FieldLabel({ field }: { field: DeepReadonly<SettingsTreeField> }): JSX.Element {
-  if (field.input === "vec3") {
+  if (field.input === "vec2") {
+    const labels = field.labels ?? ["X", "Y"];
+    return (
+      <>
+        <MultiLabelWrapper>
+          <Typography
+            title={field.label}
+            variant="subtitle2"
+            color="text.secondary"
+            noWrap
+            flex="auto"
+          >
+            {field.label}
+          </Typography>
+          {labels.map((label, index) => (
+            <Typography
+              key={label}
+              title={field.label}
+              variant="subtitle2"
+              color="text.secondary"
+              noWrap
+              style={{ gridColumn: index === 0 ? "span 1" : "2 / span 1" }}
+              flex="auto"
+            >
+              {label}
+            </Typography>
+          ))}
+        </MultiLabelWrapper>
+      </>
+    );
+  } else if (field.input === "vec3") {
     const labels = field.labels ?? ["X", "Y", "Z"];
     return (
       <>

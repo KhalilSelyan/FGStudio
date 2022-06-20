@@ -11,7 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { CircularProgress, Link } from "@mui/material";
+import { CircularProgress, Link, styled as muiStyled } from "@mui/material";
 import React, {
   useCallback,
   useMemo,
@@ -29,7 +29,6 @@ import {
   MosaicPath,
 } from "react-mosaic-component";
 import "react-mosaic-component/react-mosaic-component.css";
-import styled from "styled-components";
 
 import { EmptyPanelLayout } from "@foxglove/studio-base/components/EmptyPanelLayout";
 import EmptyState from "@foxglove/studio-base/components/EmptyState";
@@ -58,7 +57,9 @@ type Props = {
 // place the dropped item as a sibling of the Tab), as well as the "root drop targets" inside the
 // nested mosaic (that would place the dropped item as a direct child of the Tab). Makes it easier
 // to drop panels into a tab layout.
-const HideTopLevelDropTargets = styled.div.attrs({ style: { margin: 0 } })`
+const HideTopLevelDropTargets = muiStyled("div")`
+  margin: 0;
+
   .mosaic-root + .drop-target-container {
     display: none !important;
   }
@@ -137,6 +138,10 @@ export function UnconnectedPanelLayout(props: Props): React.ReactElement {
         panelCompoentCache.current.set(type, Panel);
       }
 
+      // When a panel changes from being the only panel to one of many in a layout and
+      // is no longer the top level panel we need to force it to update to recalculate
+      // whether it should be draggable or not. Since the panel component is memoized we use
+      // a key to break through the memoization when the panel's layout path changes.
       const mosaicWindow = (
         <MosaicWindow
           title=""
@@ -152,7 +157,7 @@ export function UnconnectedPanelLayout(props: Props): React.ReactElement {
               </EmptyState>
             }
           >
-            <Panel childId={id} tabId={tabId} />
+            <Panel childId={id} tabId={tabId} key={`${id}${tabId}${path.length}`} />
           </Suspense>
         </MosaicWindow>
       );
