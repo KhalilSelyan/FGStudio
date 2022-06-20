@@ -3,6 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import produce from "immer";
+import { set } from "lodash";
 import memoizeWeak from "memoize-weak";
 import { useMemo } from "react";
 
@@ -66,15 +67,14 @@ export function settingsActionReducer(prevConfig: Config, action: SettingsTreeAc
       case "update":
         switch (action.payload.path[0]) {
           case "general":
-            (draft as Record<string, unknown>)[action.payload.path[1]!] = action.payload.value;
+            set(draft, [action.payload.path[1]!], action.payload.value);
             break;
           case "rules":
             if (action.payload.path[1] === "default") {
-              (draft as Record<string, unknown>)[action.payload.path[2]!] = action.payload.value;
+              set(draft, [action.payload.path[2]!], action.payload.value);
             } else {
               const ruleIndex = +action.payload.path[1]!;
-              (draft.rules[ruleIndex] as Record<string, unknown>)[action.payload.path[2]!] =
-                action.payload.value;
+              set(draft.rules[ruleIndex]!, [action.payload.path[2]!], action.payload.value);
             }
             break;
           default:
