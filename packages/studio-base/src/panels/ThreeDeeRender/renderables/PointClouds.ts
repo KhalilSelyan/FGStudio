@@ -21,10 +21,24 @@ import { SettingsTreeEntry, SettingsTreeNodeWithActionHandler } from "../Setting
 import { rgbaToCssString, stringToRgba } from "../color";
 import { normalizeByteArray, normalizeHeader } from "../normalizeMessages";
 import { PointCloud2, POINTCLOUD_DATATYPES, PointField, PointFieldType } from "../ros";
-import { LayerSettings, LayerSettingsPointCloud2 } from "../settings";
+import { BaseSettings } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { getColorConverter } from "./pointClouds/colors";
 import { FieldReader, getReader } from "./pointClouds/fieldReaders";
+
+export type LayerSettingsPointCloud2 = BaseSettings & {
+  pointSize: number;
+  pointShape: "circle" | "square";
+  decayTime: number;
+  colorMode: "flat" | "gradient" | "colormap" | "rgb" | "rgba";
+  flatColor: string;
+  colorField: string | undefined;
+  gradient: [string, string];
+  colorMap: "turbo" | "rainbow";
+  rgbByteOrder: "rgba" | "bgra" | "abgr";
+  minValue: number | undefined;
+  maxValue: number | undefined;
+};
 
 const DEFAULT_POINT_SIZE = 1.5;
 const DEFAULT_POINT_SHAPE = "circle";
@@ -532,23 +546,22 @@ function bestColorByField(pclFields: string[]): string {
 
 function settingsNode(
   pclFieldsByTopic: Map<string, string[]>,
-  topicConfig: Partial<LayerSettings>,
+  config: Partial<LayerSettingsPointCloud2>,
   topic: Topic,
 ): SettingsTreeNode {
-  const cur = topicConfig as Partial<LayerSettingsPointCloud2> | undefined;
   const pclFields = pclFieldsByTopic.get(topic.name) ?? POINTCLOUD_REQUIRED_FIELDS;
-  const pointSize = cur?.pointSize;
-  const pointShape = cur?.pointShape ?? "circle";
-  const decayTime = cur?.decayTime;
-  const colorMode = cur?.colorMode ?? "flat";
-  const flatColor = cur?.flatColor ?? "#ffffff";
-  const colorField = cur?.colorField ?? bestColorByField(pclFields);
+  const pointSize = config.pointSize;
+  const pointShape = config.pointShape ?? "circle";
+  const decayTime = config.decayTime;
+  const colorMode = config.colorMode ?? "flat";
+  const flatColor = config.flatColor ?? "#ffffff";
+  const colorField = config.colorField ?? bestColorByField(pclFields);
   const colorFieldOptions = pclFields.map((field) => ({ label: field, value: field }));
-  const gradient = cur?.gradient;
-  const colorMap = cur?.colorMap ?? "turbo";
-  const rgbByteOrder = cur?.rgbByteOrder ?? "rgba";
-  const minValue = cur?.minValue;
-  const maxValue = cur?.maxValue;
+  const gradient = config.gradient;
+  const colorMap = config.colorMap ?? "turbo";
+  const rgbByteOrder = config.rgbByteOrder ?? "rgba";
+  const minValue = config.minValue;
+  const maxValue = config.maxValue;
 
   const fields: SettingsTreeFields = {};
   fields.pointSize = {

@@ -81,15 +81,13 @@ export class SettingsManager extends EventEmitter<SettingsManagerEvents> {
     // Walk the settings tree down to the end of the path, firing any action
     // handlers along the way
     let curNode = this._root;
+    curNode.handler?.(action);
     for (const segment of path) {
-      if (curNode.handler) {
-        curNode.handler(action);
-      }
-
-      const nextNode = curNode.children?.[segment];
+      const nextNode: SettingsTreeNodeWithActionHandler | undefined = curNode.children?.[segment];
       if (!nextNode) {
         return;
       }
+      nextNode.handler?.(action);
       curNode = nextNode;
     }
   };

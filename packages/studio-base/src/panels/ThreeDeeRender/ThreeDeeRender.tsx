@@ -26,16 +26,25 @@ import {
 import useCleanup from "@foxglove/studio-base/hooks/useCleanup";
 
 import { DebugGui } from "./DebugGui";
-import { Renderer } from "./Renderer";
+import { Renderer, RendererConfig } from "./Renderer";
 import { RendererContext, useRendererEvent } from "./RendererContext";
 import { Stats } from "./Stats";
 import { TF_DATATYPES, TRANSFORM_STAMPED_DATATYPES } from "./ros";
-import { CustomLayerSettings, LayerSettings, LayerType, ThreeDeeRenderConfig } from "./settings";
-
-const SHOW_DEBUG: true | false = false;
 
 const log = Logger.getLogger(__filename);
 
+const SHOW_DEBUG: true | false = false;
+const PANEL_STYLE: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  position: "relative",
+};
+const CANVAS_STYLE: React.CSSProperties = { position: "absolute", top: 0, left: 0 };
+
+/**
+ * Provides DOM overlay elements on top of the 3D scene (e.g. stats, debug GUI).
+ */
 function RendererOverlay(props: { enableStats: boolean }): JSX.Element {
   const [_, setSelectedRenderable] = useState<THREE.Object3D | undefined>(undefined);
 
@@ -61,23 +70,21 @@ function RendererOverlay(props: { enableStats: boolean }): JSX.Element {
   );
 }
 
+/**
+ * A panel that renders a 3D scene. This is a thin wrapper around a `Renderer` instance.
+ */
 export function ThreeDeeRender({ context }: { context: PanelExtensionContext }): JSX.Element {
   const { initialState, saveState } = context;
 
   // Load and save the persisted panel configuration
-  const [config, setConfig] = useState<ThreeDeeRenderConfig>(() => {
-    const partialConfig = initialState as DeepPartial<ThreeDeeRenderConfig> | undefined;
+  const [config, setConfig] = useState<RendererConfig>(() => {
+    const partialConfig = initialState as DeepPartial<RendererConfig> | undefined;
+
+    // Initialize the camera from default settings overlaid with persisted settings
     const cameraState: CameraState = merge(
       cloneDeep(DEFAULT_CAMERA_STATE),
       partialConfig?.cameraState,
     );
-
-    const layers: Record<string, CustomLayerSettings> = {};
-    for (const [layerId, layer] of Object.entries(partialConfig?.layers ?? {})) {
-      if (layer?.type != undefined) {
-        layers[layerId] = layer as CustomLayerSettings;
-      }
-    }
 
     return {
       cameraState,
@@ -85,7 +92,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       scene: partialConfig?.scene ?? {},
       transforms: {},
       topics: partialConfig?.topics ?? {},
-      layers,
+      layers: partialConfig?.layers ?? {},
     };
   });
   const configRef = useRef(config);
@@ -94,17 +101,10 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
   const [canvas, setCanvas] = useState<HTMLCanvasElement | ReactNull>(ReactNull);
   const [renderer, setRenderer] = useState<Renderer | ReactNull>(ReactNull);
-  useEffect(() => {
-    const curRenderer = canvas ? new Renderer(canvas, configRef.current) : ReactNull;
-    setRenderer(curRenderer);
-
-    if (curRenderer) {
-      // Initialize all custom layers
-      for (const [layerId, layerConfig] of Object.entries(configRef.current.layers)) {
-        updateLayerSettings(curRenderer, layerId, layerConfig.type, layerConfig);
-      }
-    }
-  }, [canvas]);
+  useEffect(
+    () => setRenderer(canvas ? new Renderer(canvas, configRef.current) : ReactNull),
+    [canvas],
+  );
 
   const [colorScheme, setColorScheme] = useState<"dark" | "light" | undefined>();
   const [topics, setTopics] = useState<ReadonlyArray<Topic> | undefined>();
@@ -146,12 +146,13 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     (curRenderer: Renderer) => setSettingsTree(curRenderer.settings.tree()),
     [],
   );
-
-  const updateConfig = useCallback((curRenderer: Renderer) => setConfig(curRenderer.config), []);
-
   useRendererEvent("settingsTreeChange", updateSettingsTree, renderer);
+
+  // Save the panel configuration when it changes
+  const updateConfig = useCallback((curRenderer: Renderer) => setConfig(curRenderer.config), []);
   useRendererEvent("configChange", updateConfig, renderer);
 
+  // Rebuild the settings sidebar tree as needed
   useEffect(() => {
     // eslint-disable-next-line no-underscore-dangle
     (
@@ -180,7 +181,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
   // Save panel settings whenever they change
   const throttledSave = useDebouncedCallback(
-    (newConfig: ThreeDeeRenderConfig) => saveState(newConfig),
+    (newConfig: RendererConfig) => saveState(newConfig),
     1000,
     { leading: false, trailing: true, maxWait: 1000 },
   );
@@ -189,6 +190,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   // Dispose of the renderer (and associated GPU resources) on teardown
   useCleanup(() => renderer?.dispose());
 
+  // Establish a connection to the message pipeline with context.watch and context.onRender
   useLayoutEffect(() => {
     context.onRender = (renderState: RenderState, done) => {
       ReactDOM.unstable_batchedUpdates(() => {
@@ -241,7 +243,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
         subscriptions.add(topic.name);
       } else if (datatypeHandlers.has(topic.datatype)) {
         // Subscribe to known datatypes if the topic has not been toggled off
-        const topicConfig = config.topics[topic.name] as Partial<LayerSettings> | undefined;
+        const topicConfig = config.topics[topic.name];
         if (topicConfig?.visible !== false) {
           subscriptions.add(topic.name);
         }
@@ -302,8 +304,8 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     renderRef.current.needsRender = true;
   }, [cameraState, cameraStore, renderer]);
 
+  // Render a new frame if requested
   useEffect(() => {
-    // Render a new frame if requested
     if (renderer && renderRef.current.needsRender) {
       renderer.animationFrame();
       renderRef.current.needsRender = false;
@@ -326,42 +328,21 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     refreshRate: 0,
     refreshMode: "debounce",
   });
+
   return (
-    <div
-      style={{ width: "100%", height: "100%", display: "flex", position: "relative" }}
-      ref={resizeRef}
-    >
+    <div style={PANEL_STYLE} ref={resizeRef}>
       <CameraListener cameraStore={cameraStore} shiftKeys={true}>
         <div
           // This element forces CameraListener to fill its container. We need this instead of just
-          // the canvas since three.js manages the size of the canvas element and we use position:absolute.
+          // the canvas since three.js manages the size of the canvas element and we use
+          // position:absolute
           style={{ width, height }}
         />
-        <canvas ref={setCanvas} style={{ position: "absolute", top: 0, left: 0 }} />
+        <canvas ref={setCanvas} style={CANVAS_STYLE} />
       </CameraListener>
       <RendererContext.Provider value={renderer}>
         <RendererOverlay enableStats={config.scene.enableStats ?? true} />
       </RendererContext.Provider>
     </div>
   );
-}
-
-function updateLayerSettings(
-  renderer: Renderer,
-  id: string,
-  layerType: LayerType,
-  layerConfig: Partial<CustomLayerSettings> | undefined,
-) {
-  // If visibility is toggled off for this layer, clear its layer errors
-  if (layerConfig?.visible === false) {
-    renderer.settings.errors.clearPath(["layers", id]);
-  }
-
-  switch (layerType) {
-    case LayerType.Grid:
-      // renderer.setGridSettings(id, layerConfig as Partial<LayerSettingsGrid> | undefined);
-      break;
-    default:
-      throw new Error(`Attempted to update layer settings for type ${layerType} (id "${id}")`);
-  }
 }

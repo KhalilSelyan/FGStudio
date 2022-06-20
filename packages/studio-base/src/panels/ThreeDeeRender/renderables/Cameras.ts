@@ -29,11 +29,17 @@ import {
   RegionOfInterest,
   TIME_ZERO,
 } from "../ros";
-import { LayerSettingsCameraInfo, PRECISION_DISTANCE } from "../settings";
+import { BaseSettings, PRECISION_DISTANCE } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { RenderableLineList } from "./markers/RenderableLineList";
 
 const log = Logger.getLogger(__filename);
+
+export type LayerSettingsCameraInfo = BaseSettings & {
+  distance: number;
+  width: number;
+  color: string;
+};
 
 const DEFAULT_DISTANCE = 1;
 const DEFAULT_WIDTH = 0.01;

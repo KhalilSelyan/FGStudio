@@ -27,10 +27,17 @@ import {
   POSE_STAMPED_DATATYPES,
   PoseWithCovariance,
 } from "../ros";
-import { LayerSettingsPose } from "../settings";
+import { BaseSettings } from "../settings";
 import { makePose, Pose } from "../transforms/geometry";
 import { RenderableArrow } from "./markers/RenderableArrow";
 import { RenderableSphere } from "./markers/RenderableSphere";
+
+export type LayerSettingsPose = BaseSettings & {
+  scale: [number, number, number];
+  color: string;
+  showCovariance: boolean;
+  covarianceColor: string;
+};
 
 const DEFAULT_SCALE: THREE.Vector3Tuple = [1, 0.15, 0.15];
 const DEFAULT_COLOR = { r: 124 / 255, g: 107 / 255, b: 1, a: 1 };

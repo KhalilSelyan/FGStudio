@@ -6,8 +6,8 @@ import * as THREE from "three";
 
 import { rgbaGradient, rgbaToLinear, SRGBToLinear, stringToRgba } from "../../color";
 import { clamp } from "../../math";
-import { ColorRGBA } from "../../ros";
-import { LayerSettingsPointCloud2 } from "../../settings";
+import type { ColorRGBA } from "../../ros";
+import type { LayerSettingsPointCloud2 } from "../PointClouds";
 
 export type ColorConverter = (output: ColorRGBA, colorValue: number) => void;
 

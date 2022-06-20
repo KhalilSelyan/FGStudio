@@ -40,11 +40,17 @@ import {
   COMPRESSED_IMAGE_DATATYPES,
   CAMERA_INFO_DATATYPES,
 } from "../ros";
-import { LayerSettingsImage, PRECISION_DISTANCE } from "../settings";
+import { BaseSettings, PRECISION_DISTANCE } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { CameraInfoUserData } from "./Cameras";
 
 const log = Logger.getLogger(__filename);
+
+export type LayerSettingsImage = BaseSettings & {
+  cameraInfoTopic: string | undefined;
+  distance: number;
+  color: string;
+};
 
 const CREATE_BITMAP_ERR = "CreateBitmap";
 

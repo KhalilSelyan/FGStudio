@@ -5,8 +5,9 @@
 import { BaseUserData, Renderable } from "../Renderable";
 import { Renderer } from "../Renderer";
 import { Marker, MarkerAction, MarkerType } from "../ros";
-import { LayerSettingsMarker, LayerSettingsMarkerNamespace } from "../settings";
+import { BaseSettings } from "../settings";
 import { updatePose } from "../updatePose";
+import type { LayerSettingsMarker } from "./Markers";
 import { RenderableArrow } from "./markers/RenderableArrow";
 import { RenderableCube } from "./markers/RenderableCube";
 import { RenderableCubeList } from "./markers/RenderableCubeList";
@@ -21,6 +22,8 @@ import { RenderableSphereList } from "./markers/RenderableSphereList";
 import { RenderableTextViewFacing } from "./markers/RenderableTextViewFacing";
 import { RenderableTriangleList } from "./markers/RenderableTriangleList";
 import { missingTransformMessage, MISSING_TRANSFORM } from "./transforms";
+
+export type LayerSettingsMarkerNamespace = BaseSettings;
 
 const INVALID_CUBE_LIST = "INVALID_CUBE_LIST";
 const INVALID_LINE_LIST = "INVALID_LINE_LIST";

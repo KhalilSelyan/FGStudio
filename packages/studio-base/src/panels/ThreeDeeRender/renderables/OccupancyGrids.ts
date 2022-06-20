@@ -22,7 +22,15 @@ import {
   normalizeTime,
 } from "../normalizeMessages";
 import { ColorRGBA, OccupancyGrid, OCCUPANCY_GRID_DATATYPES } from "../ros";
-import { LayerSettingsOccupancyGrid } from "../settings";
+import { BaseSettings } from "../settings";
+
+export type LayerSettingsOccupancyGrid = BaseSettings & {
+  frameLocked: boolean;
+  minColor: string;
+  maxColor: string;
+  unknownColor: string;
+  invalidColor: string;
+};
 
 // TODO(jhurliman): Upload the OccupancyGrid data directly as a R8I texture and
 // use a custom ShaderMaterial with an isampler2D uniform to reimplement the

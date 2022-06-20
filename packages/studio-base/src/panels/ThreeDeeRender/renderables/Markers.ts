@@ -20,9 +20,13 @@ import {
   normalizeVector3s,
 } from "../normalizeMessages";
 import { Marker, MarkerArray, MARKER_ARRAY_DATATYPES, MARKER_DATATYPES } from "../ros";
-import { LayerSettingsMarker, LayerSettingsMarkerNamespace } from "../settings";
+import { BaseSettings } from "../settings";
 import { makePose } from "../transforms";
-import { TopicMarkers } from "./TopicMarkers";
+import { LayerSettingsMarkerNamespace, TopicMarkers } from "./TopicMarkers";
+
+export type LayerSettingsMarker = BaseSettings & {
+  namespaces: Record<string, LayerSettingsMarkerNamespace>;
+};
 
 const DEFAULT_SETTINGS: LayerSettingsMarker = {
   visible: true,

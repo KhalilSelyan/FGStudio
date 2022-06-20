@@ -15,9 +15,11 @@ import { Renderer } from "../Renderer";
 import { SceneExtension } from "../SceneExtension";
 import { SettingsTreeEntry } from "../SettingsManager";
 import { arrowHeadSubdivisions, arrowShaftSubdivisions, DetailLevel } from "../lod";
-import { LayerSettingsTransform } from "../settings";
+import { BaseSettings } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { linePickingMaterial, releaseLinePickingMaterial } from "./markers/materials";
+
+export type LayerSettingsTransform = BaseSettings;
 
 const SHAFT_LENGTH = 0.154;
 const SHAFT_DIAMETER = 0.02;

@@ -23,9 +23,14 @@ import {
   POLYGON_STAMPED_DATATYPES,
   TIME_ZERO,
 } from "../ros";
-import { LayerSettingsPolygon } from "../settings";
+import { BaseSettings } from "../settings";
 import { makePose } from "../transforms/geometry";
 import { RenderableLineStrip } from "./markers/RenderableLineStrip";
+
+export type LayerSettingsPolygon = BaseSettings & {
+  lineWidth: number;
+  color: string;
+};
 
 const DEFAULT_COLOR = { r: 124 / 255, g: 107 / 255, b: 1, a: 1 };
 const DEFAULT_LINE_WIDTH = 0.1;
