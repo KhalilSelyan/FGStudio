@@ -156,7 +156,7 @@ export function useSettingsTree(
           input: "select",
           value: style,
           options: [
-            { label: "Circle", value: "circle" },
+            { label: "Bulb", value: "bulb" },
             { label: "Background", value: "background" },
           ],
         },
