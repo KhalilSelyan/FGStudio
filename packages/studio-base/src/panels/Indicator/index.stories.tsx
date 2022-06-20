@@ -46,7 +46,7 @@ export const MissingValue = (): JSX.Element => {
     <Indicator
       overrideConfig={{
         path: "/data.value",
-        style: "circle",
+        style: "bulb",
         rules: [
           { operator: "=", rawValue: "true", color: "#00dd00", label: "True" },
           { operator: "=", rawValue: "true", color: "#dd00dd", label: "False" },
@@ -80,7 +80,7 @@ const BooleanStory = (): JSX.Element => {
     <Indicator
       overrideConfig={{
         path: "/data.value",
-        style: "circle",
+        style: "bulb",
         rules: [
           { operator: "=", rawValue: "true", color: "#00dd00", label: "True" },
           { operator: "=", rawValue: "false", color: "#dd00dd", label: "False" },
@@ -101,7 +101,7 @@ export const String = (): JSX.Element => {
     <Indicator
       overrideConfig={{
         path: "/data.value",
-        style: "circle",
+        style: "bulb",
         rules: [{ operator: "=", rawValue: "hello", color: "#00dd00", label: "Hello" }],
         fallbackColor: "#dddd00",
         fallbackLabel: "Fallback",
@@ -116,7 +116,7 @@ const NumberStory = (): JSX.Element => {
     <Indicator
       overrideConfig={{
         path: "/data.value",
-        style: "circle",
+        style: "bulb",
         rules: [
           { operator: "<", rawValue: "0", color: "#00dd00", label: "Negative" },
           { operator: "=", rawValue: "0", color: "#929292", label: "Zero" },

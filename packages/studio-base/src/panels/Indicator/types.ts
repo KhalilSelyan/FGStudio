@@ -12,7 +12,7 @@ export type Rule = {
 
 export type Config = {
   path: string;
-  style: "circle" | "background";
+  style: "bulb" | "background";
   rules: Rule[];
   fallbackColor: string;
   fallbackLabel: string;

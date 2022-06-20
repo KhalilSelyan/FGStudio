@@ -68,12 +68,15 @@ export function settingsActionReducer(prevConfig: Config, action: SettingsTreeAc
           case "general":
             (draft as Record<string, unknown>)[action.payload.path[1]!] = action.payload.value;
             break;
-          case "rules": {
-            const ruleIndex = +action.payload.path[1]!;
-            (draft.rules[ruleIndex] as Record<string, unknown>)[action.payload.path[2]!] =
-              action.payload.value;
+          case "rules":
+            if (action.payload.path[1] === "default") {
+              (draft as Record<string, unknown>)[action.payload.path[2]!] = action.payload.value;
+            } else {
+              const ruleIndex = +action.payload.path[1]!;
+              (draft.rules[ruleIndex] as Record<string, unknown>)[action.payload.path[2]!] =
+                action.payload.value;
+            }
             break;
-          }
           default:
             throw new Error(`Unexpected payload.path[0]: ${action.payload.path[0]}`);
         }
@@ -132,7 +135,11 @@ const memoizedCreateRuleNode = memoizeWeak(
   },
 );
 
-export function useSettingsTree(config: Config, error: string | undefined): SettingsTreeRoots {
+export function useSettingsTree(
+  config: Config,
+  pathParseError: string | undefined,
+  error: string | undefined,
+): SettingsTreeRoots {
   const { path, style, rules } = config;
   const generalSettings: SettingsTreeNode = useMemo(
     () => ({
@@ -142,6 +149,7 @@ export function useSettingsTree(config: Config, error: string | undefined): Sett
           label: "Data",
           input: "messagepath",
           value: path,
+          error: pathParseError,
         },
         style: {
           label: "Style",
@@ -154,7 +162,7 @@ export function useSettingsTree(config: Config, error: string | undefined): Sett
         },
       },
     }),
-    [error, path, style],
+    [error, path, pathParseError, style],
   );
 
   const { fallbackColor, fallbackLabel } = config;

@@ -34,7 +34,7 @@ function getTextColorForBackground(backgroundColor: string) {
 }
 const defaultConfig: Config = {
   path: "",
-  style: "circle",
+  style: "bulb",
   fallbackColor: "#a0a0a0",
   fallbackLabel: "False",
   rules: [{ operator: "=", rawValue: "true", color: "#68e24a", label: "True" }],
@@ -46,6 +46,7 @@ type State = {
   latestMessage: MessageEvent<unknown> | undefined;
   latestMatchingQueriedData: unknown | undefined;
   error: Error | undefined;
+  pathParseError: string | undefined;
 };
 
 type Action =
@@ -54,13 +55,19 @@ type Action =
   | { type: "seek" };
 
 function getSingleDataItem(results: unknown[]) {
-  return results.length === 1 ? results[0] : undefined;
+  if (results.length <= 1) {
+    return results[0];
+  }
+  throw new Error("Message path produced multiple results");
 }
 
 function reducer(state: State, action: Action): State {
   try {
     switch (action.type) {
       case "message": {
+        if (state.pathParseError != undefined) {
+          return { ...state, latestMessage: action.message, error: undefined };
+        }
         const data = state.parsedPath
           ? getSingleDataItem(simpleGetMessagePathDataItems(action.message, state.parsedPath))
           : undefined;
@@ -71,20 +78,38 @@ function reducer(state: State, action: Action): State {
           error: undefined,
         };
       }
-      case "path":
+      case "path": {
+        const newPath = parseRosPath(action.path);
+        let pathParseError: string | undefined;
+        if (
+          newPath?.messagePath.some(
+            (part) =>
+              (part.type === "filter" && typeof part.value === "object") ||
+              (part.type === "slice" &&
+                (typeof part.start === "object" || typeof part.end === "object")),
+          ) === true
+        ) {
+          pathParseError = "Message paths using variables are not currently supported";
+        }
+        let latestMatchingQueriedData: unknown | undefined;
+        let error: Error | undefined;
+        try {
+          latestMatchingQueriedData =
+            newPath && pathParseError == undefined && state.latestMessage
+              ? getSingleDataItem(simpleGetMessagePathDataItems(state.latestMessage, newPath))
+              : undefined;
+        } catch (err) {
+          error = err;
+        }
         return {
           ...state,
           path: action.path,
-          parsedPath: parseRosPath(action.path),
-          latestMatchingQueriedData:
-            state.parsedPath && state.latestMessage
-              ? getSingleDataItem(
-                  simpleGetMessagePathDataItems(state.latestMessage, state.parsedPath),
-                )
-              : undefined,
-          error: undefined,
+          parsedPath: newPath,
+          latestMatchingQueriedData,
+          error,
+          pathParseError,
         };
-
+      }
       case "seek":
         return {
           ...state,
@@ -94,7 +119,7 @@ function reducer(state: State, action: Action): State {
         };
     }
   } catch (error) {
-    return { ...state, latestMessage: undefined, latestMatchingQueriedData: undefined, error };
+    return { ...state, latestMatchingQueriedData: undefined, error };
   }
 }
 
@@ -116,6 +141,7 @@ export function Indicator({ context }: Props): JSX.Element {
       parsedPath: parseRosPath(path),
       latestMessage: undefined,
       latestMatchingQueriedData: undefined,
+      pathParseError: undefined,
       error: undefined,
     }),
   );
@@ -139,12 +165,7 @@ export function Indicator({ context }: Props): JSX.Element {
       }
 
       const message = last(renderState.currentFrame);
-      if (message != undefined) {
-        if (message.topic !== state.parsedPath?.topicName) {
-          throw new Error(
-            `Rendering incorrect path ${message.topic}, expected ${state.parsedPath?.topicName}`,
-          );
-        }
+      if (message != undefined && message.topic === state.parsedPath?.topicName) {
         dispatch({ type: "message", message });
       }
     };
@@ -162,7 +183,7 @@ export function Indicator({ context }: Props): JSX.Element {
     [setConfig],
   );
 
-  const settingsTree = useSettingsTree(config, state.error?.message);
+  const settingsTree = useSettingsTree(config, state.pathParseError, state.error?.message);
   useEffect(() => {
     // eslint-disable-next-line no-underscore-dangle
     (
@@ -211,7 +232,7 @@ export function Indicator({ context }: Props): JSX.Element {
         }}
       >
         <Stack horizontal verticalAlign="center" tokens={{ childrenGap: theme.spacing.m }}>
-          {style === "circle" && (
+          {style === "bulb" && (
             <div
               style={{
                 width: "40px",
