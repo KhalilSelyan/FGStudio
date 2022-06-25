@@ -52,4 +52,4 @@ And this one was used as an onClick function to actually send the data through t
 
 ## 🔗 Repository Link
 
-[![Github Repository at adding-button branch](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/KhalilSelyan/FGStudio/tree/adding-button)
+[![Github Repository at adding-button branch]](https://github.com/KhalilSelyan/FGStudio/tree/adding-button)
