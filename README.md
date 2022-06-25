@@ -1,102 +1,55 @@
-# <img src="resources/icon/icon.png" width="40" height="40" align="top"> Foxglove Studio
+# Publish a Chatter Assignment
 
-[Foxglove Studio](https://foxglove.dev) is an integrated visualization and diagnosis tool for robotics, available [in your browser](https://studio.foxglove.dev/) or for [download](https://foxglove.dev/download) as a desktop app on Linux, Windows, and macOS.
+The task was to create an extension panel that only has a button to publish a chatter which the listener would receive and print it out as such:
 
-<p align="center">
-  <a href="https://foxglove.dev"><img alt="Foxglove Studio screenshot" src="/resources/screenshot.png"></a>
-</p>
+![Task](https://user-images.githubusercontent.com/36904941/175774639-7f26a2d1-a004-41eb-8eff-01084d24892a.png)
 
-To learn more, visit the following resources:
+## Task 1: Prepare the environment, Description
 
-- [About](https://foxglove.dev/about)
-- [Documentation](https://foxglove.dev/docs)
-- [Release notes](https://github.com/foxglove/studio/releases)
-- [ROS Wiki page](http://wiki.ros.org/FoxgloveStudio)
-- [Blog](https://foxglove.dev/blog)
+![Task1ScreenShot](https://user-images.githubusercontent.com/36904941/175774792-9a627b8f-ac6b-4796-ab15-387900ba954c.png)
 
-You can also join us on the following platforms to ask questions, share feedback, and stay up to date on what our team is working on:
+After re-installing ubuntu and all needed packages node python3 etc, i didn't encounter any difficulties to complete this assignment.
 
-- [GitHub Discussions](https://github.com/foxglove/studio/discussions)
-- [Slack](https://foxglove.dev/join-slack)
-- [Newsletter](https://www.getrevue.co/profile/foxglove)
-- [Twitter](https://twitter.com/foxglovedev)
-- [LinkedIn](https://www.linkedin.com/company/foxglovedev)
+## Task 2: Publishing data, Description
 
-## Installation
+![Task2ScreenShot](https://user-images.githubusercontent.com/36904941/175774892-b0405064-eeda-4818-99b4-54c686ace94c.png)
 
-Visit [foxglove.dev/download](https://foxglove.dev/download) or [GitHub Releases](https://github.com/foxglove/studio/releases) to download the latest version.
+Screenshot of the task being done next to the task information.
 
-## Self-hosting
+![ClearScreenShot](https://user-images.githubusercontent.com/36904941/175774939-85619c1a-5cf8-4884-8601-375c5a49ecf9.png)
 
-Foxglove Studio can be run as a standalone [desktop application](https://foxglove.dev/download), accessed in your browser at [studio.foxglove.dev](https://studio.foxglove.dev/), or self-hosted on your own domain.
+Clearer screenshot of the task itself.
 
-A Docker image is provided to make self-hosting easy. You can run it like so:
+Second task was also unproblematic as all that was required was following the steps in the proper order and getting results sent back to you.
 
-```sh
-docker run --rm -p "8080:8080" ghcr.io/foxglove/studio:latest
+## Task 3: Add a custom panel that publishes a message, Description
+
+![PanelAddition](https://user-images.githubusercontent.com/36904941/175775676-72cf6e4b-e0d0-4026-978c-ef72a257f5b1.png)
+
+Here, we can see that the new panel "Publish a Chatter" has been added on the nav bar as well as the grid.
+
+![PublishedData](https://user-images.githubusercontent.com/36904941/175775678-32d1b14a-eb10-4749-947b-f4ab195f6b84.png)
+
+After clicking the "Publish a Chatter" button, we can see on the listener that we receive data as requested on the task document.
+
+After reading the documentation provided by foxglove for adding custom panels, it was clear what was needed to be used to get the result needed.
+
+This line of code right here
+
+```javascript
+context.advertise?.("/chatter", "std_msgs/msg/String");
 ```
 
-Foxglove Studio will then be accessible in your browser at [localhost:8080](http://localhost:8080/).
+Was used to tell the api that we are going to be sending data of the type "std_msgs/msg/String" to the topic "/chatter".
 
-For all list of available image versions, see the [package details](https://github.com/foxglove/studio/pkgs/container/studio).
+And this one was used as an onClick function to actually send the data through the button "Publish a Chatter"
 
-## Contributing
-
-Foxglove Studio is primarily written in TypeScript – contributions are welcome!
-
-Note: All contributors must agree to our [Contributor License Agreement](https://github.com/foxglove/cla).
-
-**Supported development environments:** Linux, Windows, macOS
-
-**Dependencies:**
-
-- [Node.js](https://nodejs.org/en/) v14+
-- [Yarn](https://yarnpkg.com/getting-started/install) – `npm install -g yarn`
-- [Git LFS](https://git-lfs.github.com/)
-- [Visual Studio Code](https://code.visualstudio.com/) – Recommended
-
-**Getting started:**
-
-1. Clone repo
-1. Run `yarn install`
-1. Launch the development environment:
-
-```sh
-# To launch the desktop app (run both scripts concurrently):
-$ yarn serve        # start webpack
-$ yarn start        # launch electron
-
-# To launch the browser app:
-$ yarn web:serve
-
-# To launch the browser app using a local instance of the backend server:
-$ yarn web:serve:local
-
-# To launch the storybook:
-$ yarn storybook
-
-# Advanced usage: running webpack and electron on different computers (or VMs) on the same network
-$ yarn serve --host 192.168.xxx.yyy         # the address where electron can reach the webpack dev server
-$ yarn dlx electron@13.0.0-beta.13 .webpack # launch the version of electron for the current computer's platform
-
-# To launch the desktop app using production API endpoints
-$ yarn serve --env FOXGLOVE_BACKEND=production
-$ yarn start
-
-# NOTE: yarn web:serve does not support connecting to the production endpoints
+```javascript
+        onClick={() => {
+          context.publish?.("/chatter", { data: "assignment2" });
+        }}
 ```
 
-A [Dockerfile](/Dockerfile) to self-host the browser app is also available.
+## 🔗 Repository Link
 
-**Other useful commands:**
-
-```sh
-$ yarn run          # list available commands
-$ yarn lint         # lint all files
-$ yarn test         # run all tests
-$ yarn test:watch   # run tests on changed files
-```
-
-### Credits
-
-Foxglove Studio originally began as a fork of [Webviz](https://github.com/cruise-automation/webviz), an open source project developed by [Cruise](https://getcruise.com/). The codebase has since changed significantly, with a port to TypeScript, more [panels](https://foxglove.dev/docs/panels/introduction), additional [data sources](https://foxglove.dev/docs/connection/data-sources), improved [layout management](https://foxglove.dev/docs/layouts), new [team features](https://foxglove.dev/blog/announcing-foxglove-for-teams), and an [Extension API](https://foxglove.dev/docs/extensions/getting-started).
+[![Github Repository at adding-button branch](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/KhalilSelyan/FGStudio/tree/adding-button)

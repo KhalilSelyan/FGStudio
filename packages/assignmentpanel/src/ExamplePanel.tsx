@@ -43,10 +43,11 @@ function ExamplePanel({ context }: { context: PanelExtensionContext }): JSX.Elem
     // This corresponds to the _currentFrame_ field of render state.
     context.watch("currentFrame");
 
-    // subscribe to some topics, you could do this within other effects, based on input fields, etc
-    // Once you subscribe to topics, currentFrame will contain message events from those topics (assuming there are messages).
+    /* Advertising to the topic /chatter with the message type std_msgs/msg/String. */
     context.advertise?.("/chatter", "std_msgs/msg/String");
 
+    // subscribe to some topics, you could do this within other effects, based on input fields, etc
+    // Once you subscribe to topics, currentFrame will contain message events from those topics (assuming there are messages).
     context.subscribe(["/chatter"]);
     console.log(topics, messages);
   }, []);
@@ -63,7 +64,6 @@ function ExamplePanel({ context }: { context: PanelExtensionContext }): JSX.Elem
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          justifyItems: "center",
           width: "12rem",
           height: "4rem",
           borderRadius: "2rem",
@@ -74,7 +74,7 @@ function ExamplePanel({ context }: { context: PanelExtensionContext }): JSX.Elem
           padding: "0.5rem",
         }}
         onClick={() => {
-          // publish a std_msgs/String message to the chatter topic
+          /* Publishing a message to the topic /chatter with the message type std_msgs/msg/String. */
           context.publish?.("/chatter", { data: "assignment2" });
         }}
       >
