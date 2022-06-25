@@ -4,6 +4,10 @@ The task was to create an extension panel that only has a button to publish a ch
 
 ![Task](https://user-images.githubusercontent.com/36904941/175774639-7f26a2d1-a004-41eb-8eff-01084d24892a.png)
 
+## Solution Files Location
+
+The files for the solution are in the `packages/assignmentpanel` folder.
+
 ## Task 1: Prepare the environment, Description
 
 ![Task1ScreenShot](https://user-images.githubusercontent.com/36904941/175774792-9a627b8f-ac6b-4796-ab15-387900ba954c.png)
