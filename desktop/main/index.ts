@@ -45,9 +45,9 @@ function isFileToOpen(arg: string) {
 }
 
 function updateNativeColorScheme() {
-  const colorScheme = getAppSetting<string>(AppSetting.COLOR_SCHEME) ?? "dark";
+  const colorScheme = getAppSetting<string>(AppSetting.COLOR_SCHEME) ?? "light";
   nativeTheme.themeSource =
-    colorScheme === "dark" ? "dark" : colorScheme === "light" ? "light" : "system";
+    colorScheme === "dark" ? "dark" : colorScheme === "light" ? "light" : "light";
 }
 
 function main() {

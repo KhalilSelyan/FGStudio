@@ -474,6 +474,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     () => ({
       panelSettingsOpen: selectedSidebarItem === "panel-settings",
       openPanelSettings: () => setSelectedSidebarItem("panel-settings"),
+      closePanelSettings: () => setSelectedSidebarItem(undefined),
       openHelp: () => setSelectedSidebarItem("help"),
       openAccountSettings: () => supportsAccountSettings && setSelectedSidebarItem("account"),
       openLayoutBrowser: () => setSelectedSidebarItem("layouts"),

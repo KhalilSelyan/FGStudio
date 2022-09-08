@@ -59,8 +59,8 @@ const PanelToolbarControlsComponent = forwardRef<HTMLDivElement, PanelToolbarCon
     const { additionalIcons, isUnknownPanel, menuOpen, setMenuOpen } = props;
     const { id: panelId, type: panelType } = useContext(PanelContext) ?? {};
     const panelCatalog = useContext(PanelCatalogContext);
-    const { setSelectedPanelIds } = useSelectedPanels();
-    const { openPanelSettings } = useWorkspace();
+    const { selectedPanelIds, setSelectedPanelIds } = useSelectedPanels();
+    const { closePanelSettings, openPanelSettings } = useWorkspace();
     const { classes } = useStyles();
 
     const hasSettingsSelector = useCallback(
@@ -83,6 +83,7 @@ const PanelToolbarControlsComponent = forwardRef<HTMLDivElement, PanelToolbarCon
         }
         const { onboarding } = await userProfileStorage.getUserProfile();
         const { settingsTooltipShownForPanelTypes = [] } = onboarding ?? {};
+        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
         if (settingsTooltipShownForPanelTypes.includes(panelType)) {
           return undefined;
         }
@@ -107,12 +108,25 @@ const PanelToolbarControlsComponent = forwardRef<HTMLDivElement, PanelToolbarCon
     }, [loadOnboardingState, panelType, userProfileStorage]);
 
     const openSettings = useCallback(async () => {
-      if (panelId) {
+      if (!panelId) {
+        return;
+      }
+
+      if (selectedPanelIds.includes(panelId)) {
+        closePanelSettings();
+      } else {
         setSelectedPanelIds([panelId]);
         openPanelSettings();
       }
       await onDismissTooltip();
-    }, [panelId, onDismissTooltip, setSelectedPanelIds, openPanelSettings]);
+    }, [
+      closePanelSettings,
+      onDismissTooltip,
+      openPanelSettings,
+      panelId,
+      selectedPanelIds,
+      setSelectedPanelIds,
+    ]);
 
     let settingsButton = (
       <ToolbarIconButton onClick={openSettings}>

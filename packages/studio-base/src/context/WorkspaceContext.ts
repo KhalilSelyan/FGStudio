@@ -9,6 +9,9 @@ export const WorkspaceContext = createContext({
   openPanelSettings: (): void => {
     throw new Error("Must be in a WorkspaceContext.Provider to open panel settings");
   },
+  closePanelSettings: (): void => {
+    throw new Error("Must be in a WorkspaceContext.Provider to close panel settings");
+  },
   openHelp: (): void => {
     throw new Error("Must be in a WorkspaceContext.Provider to open help");
   },
@@ -24,6 +27,7 @@ WorkspaceContext.displayName = "WorkspaceContext";
 export function useWorkspace(): {
   panelSettingsOpen: boolean;
   openPanelSettings: () => void;
+  closePanelSettings: () => void;
   openHelp: () => void;
   openAccountSettings: () => void;
   openLayoutBrowser: () => void;

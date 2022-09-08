@@ -99,6 +99,7 @@ function newStudioWindow(deepLinks: string[] = []): BrowserWindow {
     minHeight: 250,
     autoHideMenuBar: true,
     title: pkgInfo.productName,
+    fullscreen: true,
     webPreferences: {
       contextIsolation: true,
       preload: preloadPath,
@@ -135,7 +136,7 @@ function newStudioWindow(deepLinks: string[] = []): BrowserWindow {
 
   browserWindow.webContents.once("dom-ready", () => {
     if (!isProduction) {
-      browserWindow.webContents.openDevTools();
+      // browserWindow.webContents.openDevTools();
     }
   });
 
@@ -146,6 +147,39 @@ function newStudioWindow(deepLinks: string[] = []): BrowserWindow {
     event.preventDefault();
     void shell.openExternal(url);
   });
+
+  // browserWindow.webContents.on("record-data", (event, data) => {
+  //   log.info(data);
+  //   // run a sh file to record the data
+  //   const shPath = path.join(app.getAppPath(), "main", "record-data.sh");
+  //   const sh = child_process.spawn("sh", [shPath, data]);
+  //   sh.on("close", (code) => {
+  //     if (code !== 0) {
+  //       log.error(`record-data.sh exited with code ${code}`);
+  //     }
+  //   }
+  //   );
+
+  //   sh.on("error", (err) => {
+  //     log.error(`record-data.sh error: ${err}`);
+  //   }
+  //   );
+
+  //   sh.on("exit", (code) => {
+  //     log.info(`record-data.sh exited with code ${code}`);
+  //   }
+  //   );
+  // });
+
+  // browserWindow.webContents.on("shutdown", () => {
+  //   // turn off ubuntu computer using terminal
+  //   const turnOff = child_process.spawn("shutdown", ["-h", "now"]);
+  // });
+
+  // browserWindow.webContents.on("restart", () => {
+  //   // turn off ubuntu computer using terminal
+  //   const turnOff = child_process.spawn("shutdown", ["-r", "now"]);
+  // });
 
   browserWindow.webContents.on("will-navigate", (event, reqUrl) => {
     // if the target url is not the same as our host then force open in a browser
