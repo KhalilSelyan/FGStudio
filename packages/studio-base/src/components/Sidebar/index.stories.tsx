@@ -65,7 +65,7 @@ function Story({
           items={ITEMS}
           bottomItems={BOTTOM_ITEMS}
           selectedKey={selectedKey}
-          onSelectKey={setSelectedKey}
+          // onSelectKey={setSelectedKey}
         >
           Main content
         </Sidebar>

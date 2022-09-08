@@ -207,17 +207,17 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
   >(isPlayerPresent || !showOpenDialogOnStartup || showSignInForm ? undefined : { view: "start" });
 
   const [selectedSidebarItem, setSelectedSidebarItem] = useState<SidebarItemKey | undefined>(
-    "connection",
+    undefined,
   );
 
   // When a player is present we hide the connection sidebar. To prevent hiding the connection sidebar
   // when the user wants to select a new connection we track whether the sidebar item opened
-  const userSelectSidebarItem = useRef(false);
+  // const userSelectSidebarItem = useRef(false);
 
-  const selectSidebarItem = useCallback((item: SidebarItemKey | undefined) => {
-    userSelectSidebarItem.current = true;
-    setSelectedSidebarItem(item);
-  }, []);
+  // const selectSidebarItem = useCallback((item: SidebarItemKey | undefined) => {
+  //   userSelectSidebarItem.current = true;
+  //   setSelectedSidebarItem(item);
+  // }, []);
 
   // When a player is activated, hide the open dialog.
   useLayoutEffect(() => {
@@ -593,7 +593,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
           items={sidebarItems}
           bottomItems={sidebarBottomItems}
           selectedKey={selectedSidebarItem}
-          onSelectKey={selectSidebarItem}
+          // onSelectKey={selectSidebarItem}
         >
           {/* To ensure no stale player state remains, we unmount all panels when players change */}
           <RemountOnValueChange value={setSubscriptions}>
