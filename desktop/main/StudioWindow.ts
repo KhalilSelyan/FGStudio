@@ -1,7 +1,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
-
+// import { spawn } from "child_process";
 import {
   app,
   dialog,
@@ -22,6 +22,30 @@ import { simulateUserClick } from "./simulateUserClick";
 import { getTelemetrySettings } from "./telemetry";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
+
+// setTimeout(() => {
+//   // const ls = spawn("", ["-lh", "/usr"]);
+//   const ls = spawn(`nautilus`);
+
+//   ls.stdout.on("data", (data) => {
+//     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/restrict-plus-operands
+//     console.log("stdout: " + data.toString());
+//   });
+
+//   ls.stderr.on("data", (data) => {
+//     // eslint-disable-next-line no-restricted-syntax, @typescript-eslint/restrict-plus-operands
+//     console.log("stderr: " + data.toString());
+//   });
+
+//   ls.on("exit", (code) => {
+//     // eslint-disable-next-line no-restricted-syntax
+//     if (code == null) {
+//       return;
+//     }
+//     // eslint-disable-next-line no-restricted-syntax
+//     console.log("child process exited with code " + code.toString());
+//   });
+// }, 1000);
 
 const isMac = process.platform === "darwin";
 const isProduction = process.env.NODE_ENV === "production";
