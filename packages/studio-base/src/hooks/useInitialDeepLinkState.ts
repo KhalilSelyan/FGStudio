@@ -53,6 +53,12 @@ export function useInitialDeepLinkState(deepLinks: readonly string[]): {
   // Load data source from URL.
   useEffect(() => {
     if (!unappliedUrlState) {
+      selectSource("rosbridge-websocket", {
+        type: "connection",
+        params: {
+          url: "ws://localhost:9090",
+        },
+      });
       return;
     }
 
