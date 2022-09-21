@@ -340,7 +340,7 @@ export default class RosbridgePlayer implements Player {
       this._emitState();
 
       // Regardless of what happens, request topics again in a little bit.
-      this._requestTopicsTimeout = setTimeout(() => void this._requestTopics(), 3000);
+      // this._requestTopicsTimeout = setTimeout(() => void this._requestTopics(), 3000);
     }
   }
 
