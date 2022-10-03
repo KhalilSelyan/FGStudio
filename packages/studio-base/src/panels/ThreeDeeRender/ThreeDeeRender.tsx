@@ -2,6 +2,8 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import PokeballIcon from "@mdi/svg/svg/pokeball.svg";
+import RadiusOutlineIcon from "@mdi/svg/svg/radius-outline.svg";
 import RulerIcon from "@mdi/svg/svg/ruler.svg";
 import Video3dIcon from "@mdi/svg/svg/video-3d.svg";
 import {
@@ -82,6 +84,7 @@ const PublishClickIcons: Record<PublishClickType, React.ReactNode> = {
 /**
  * Provides DOM overlay elements on top of the 3D scene (e.g. stats, debug GUI).
  */
+
 function RendererOverlay(props: {
   canvas: HTMLCanvasElement | ReactNull;
   addPanel: LayoutActions["addPanel"];
@@ -106,6 +109,46 @@ function RendererOverlay(props: {
   );
   const [interactionsTabType, setInteractionsTabType] = useState<TabType | undefined>(undefined);
   const renderer = useRenderer();
+
+  // use setCameraState to set the camera state
+  const onClickZoomToFit = useCallback(() => {
+    if (renderer) {
+      // const cameraState = renderer.getCameraState();
+      const newCameraState = {
+        distance: 64.303,
+        perspective: true,
+        phi: 60,
+        target: [24.26, -1.779, 0],
+        targetOffset: [0, 0, 0],
+        targetOrientation: [0, 0, 0, 1],
+        thetaOffset: 92.1,
+        fovy: 45,
+        near: 0.01,
+        far: 5000,
+      } as CameraState;
+      renderer.setCameraState(newCameraState);
+    }
+  }, [renderer]);
+
+  // use setCameraState to set the camera state
+  const onClickZoomToPoke = useCallback(() => {
+    if (renderer) {
+      // const cameraState = renderer.getCameraState();
+      const newCameraState = {
+        distance: 15,
+        perspective: true,
+        phi: 60,
+        target: [0, 0, 0],
+        targetOffset: [0, 0, 0],
+        targetOrientation: [0, 0, 0, 1],
+        thetaOffset: 90,
+        fovy: 45,
+        near: 0.01,
+        far: 5000,
+      } as CameraState;
+      renderer.setCameraState(newCameraState);
+    }
+  }, [renderer]);
 
   // Publish control is only available if the canPublish prop is true and we have a fixed frame in the renderer
   const showPublishControl: boolean = props.canPublish && renderer?.fixedFrameId != undefined;
@@ -228,82 +271,109 @@ function RendererOverlay(props: {
           >
             <Video3dIcon style={{ width: 16, height: 16 }} />
           </IconButton>
+          {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            false && (
+              <IconButton
+                data-testid="measure-button"
+                color={props.measureActive ? "info" : "inherit"}
+                title={props.measureActive ? "Cancel measuring" : "Measure distance"}
+                onClick={props.onClickMeasure}
+                style={{ position: "relative", pointerEvents: "auto" }}
+              >
+                <RulerIcon style={{ width: 16, height: 16 }} />
+              </IconButton>
+            )
+          }
+
           <IconButton
-            data-testid="measure-button"
-            color={props.measureActive ? "info" : "inherit"}
-            title={props.measureActive ? "Cancel measuring" : "Measure distance"}
-            onClick={props.onClickMeasure}
-            style={{ position: "relative", pointerEvents: "auto" }}
+            data-testid="zoom-button"
+            color="inherit"
+            title="Zoom to fit"
+            onClick={onClickZoomToFit}
+            style={{ pointerEvents: "auto" }}
           >
-            <RulerIcon style={{ width: 16, height: 16 }} />
+            <RadiusOutlineIcon style={{ width: 16, height: 16 }} />
+          </IconButton>
+          <IconButton
+            data-testid="zoom-button"
+            color="inherit"
+            title="Zoom Close"
+            onClick={onClickZoomToPoke}
+            style={{ pointerEvents: "auto" }}
+          >
+            <PokeballIcon style={{ width: 16, height: 16 }} />
           </IconButton>
 
-          {showPublishControl && (
-            <>
-              <IconButton
-                {...longPressPublishEvent}
-                color={props.publishActive ? "info" : "inherit"}
-                title={props.publishActive ? "Click to cancel" : "Click to publish"}
-                ref={publickClickButtonRef}
-                onClick={props.onClickPublish}
-                data-testid="publish-button"
-                style={{ fontSize: "1rem", pointerEvents: "auto" }}
-              >
-                {selectedPublishClickIcon}
-                <div
-                  style={{
-                    borderBottom: "6px solid currentColor",
-                    borderRight: "6px solid transparent",
-                    bottom: 0,
-                    left: 0,
-                    height: 0,
-                    width: 0,
-                    margin: theme.spacing(0.25),
-                    position: "absolute",
-                  }}
-                />
-              </IconButton>
-              <Menu
-                id="publish-menu"
-                anchorEl={publickClickButtonRef.current}
-                anchorOrigin={{ vertical: "top", horizontal: "left" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-                open={publishMenuExpanded}
-                onClose={() => setPublishMenuExpanded(false)}
-              >
-                <MenuItem
-                  selected={props.publishClickType === "pose_estimate"}
-                  onClick={() => {
-                    props.onChangePublishClickType("pose_estimate");
-                    setPublishMenuExpanded(false);
-                  }}
+          {
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+            showPublishControl && false && (
+              <>
+                <IconButton
+                  {...longPressPublishEvent}
+                  color={props.publishActive ? "info" : "inherit"}
+                  title={props.publishActive ? "Click to cancel" : "Click to publish"}
+                  ref={publickClickButtonRef}
+                  onClick={props.onClickPublish}
+                  data-testid="publish-button"
+                  style={{ fontSize: "1rem", pointerEvents: "auto" }}
                 >
-                  <ListItemIcon>{PublishClickIcons.pose_estimate}</ListItemIcon>
-                  <ListItemText>Publish pose estimate</ListItemText>
-                </MenuItem>
-                <MenuItem
-                  selected={props.publishClickType === "pose"}
-                  onClick={() => {
-                    props.onChangePublishClickType("pose");
-                    setPublishMenuExpanded(false);
-                  }}
+                  {selectedPublishClickIcon}
+                  <div
+                    style={{
+                      borderBottom: "6px solid currentColor",
+                      borderRight: "6px solid transparent",
+                      bottom: 0,
+                      left: 0,
+                      height: 0,
+                      width: 0,
+                      margin: theme.spacing(0.25),
+                      position: "absolute",
+                    }}
+                  />
+                </IconButton>
+                <Menu
+                  id="publish-menu"
+                  anchorEl={publickClickButtonRef.current}
+                  anchorOrigin={{ vertical: "top", horizontal: "left" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  open={publishMenuExpanded}
+                  onClose={() => setPublishMenuExpanded(false)}
                 >
-                  <ListItemIcon>{PublishClickIcons.pose}</ListItemIcon>
-                  <ListItemText>Publish pose</ListItemText>
-                </MenuItem>
-                <MenuItem
-                  selected={props.publishClickType === "point"}
-                  onClick={() => {
-                    props.onChangePublishClickType("point");
-                    setPublishMenuExpanded(false);
-                  }}
-                >
-                  <ListItemIcon>{PublishClickIcons.point}</ListItemIcon>
-                  <ListItemText>Publish point</ListItemText>
-                </MenuItem>
-              </Menu>
-            </>
-          )}
+                  <MenuItem
+                    selected={props.publishClickType === "pose_estimate"}
+                    onClick={() => {
+                      props.onChangePublishClickType("pose_estimate");
+                      setPublishMenuExpanded(false);
+                    }}
+                  >
+                    <ListItemIcon>{PublishClickIcons.pose_estimate}</ListItemIcon>
+                    <ListItemText>Publish pose estimate</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    selected={props.publishClickType === "pose"}
+                    onClick={() => {
+                      props.onChangePublishClickType("pose");
+                      setPublishMenuExpanded(false);
+                    }}
+                  >
+                    <ListItemIcon>{PublishClickIcons.pose}</ListItemIcon>
+                    <ListItemText>Publish pose</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    selected={props.publishClickType === "point"}
+                    onClick={() => {
+                      props.onChangePublishClickType("point");
+                      setPublishMenuExpanded(false);
+                    }}
+                  >
+                    <ListItemIcon>{PublishClickIcons.point}</ListItemIcon>
+                    <ListItemText>Publish point</ListItemText>
+                  </MenuItem>
+                </Menu>
+              </>
+            )
+          }
         </Paper>
       </div>
       {clickedObjects.length > 1 && !selectedObject && (

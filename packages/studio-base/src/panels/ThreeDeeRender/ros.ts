@@ -272,6 +272,73 @@ export type CompressedImage = {
   data: Uint8Array;
 };
 
+// TEST DETECTED OBJECT TYPE VISUALIZATION
+export type DetectedObjects = {
+  header: Header;
+  objects: DetectedObject[];
+};
+
+export type DetectedObject = {
+  existence_probability: number;
+  classification: ObjectClassification[];
+  kinematics: DetectedObjectKinematics;
+  shape: Shape;
+};
+
+type SHAPE_CONSTANTS = {
+  BOUNDING_BOX: 0;
+  CYLINDER: 1;
+  POLYGON: 2;
+};
+
+export type Shape = {
+  type: SHAPE_CONSTANTS;
+  footprint: Polygon;
+  dimensions: Vector3;
+};
+
+type DetectedObjectKinematics_Constants = {
+  UNAVAILABLE: 0;
+  SIGN_UNKOWN: 1;
+  AVAILABLE: 2;
+};
+
+type Twist = {
+  linear: Vector3;
+  angular: Vector3;
+};
+
+type TwistWithCovariance = {
+  twist: Twist;
+  covariance: Matrix6;
+};
+
+export type DetectedObjectKinematics = {
+  pose_with_covariance: PoseWithCovariance;
+  twist_with_covariance: TwistWithCovariance;
+  orientation_availabilities: DetectedObjectKinematics_Constants;
+  has_position_covariance: boolean;
+  has_twist: boolean;
+  has_twist_covariance: boolean;
+};
+
+type ObjectClassification_Constants = {
+  UNKNOWN: 0;
+  CAR: 1;
+  TRUCK: 2;
+  BUS: 3;
+  TRAILER: 4;
+  MOTORCYCLE: 5;
+  BICYCLE: 6;
+  PEDESTRIAN: 7;
+};
+
+export type ObjectClassification = {
+  label: ObjectClassification_Constants;
+  probability: number;
+};
+// END TEST DETECTED OBJECT TYPE VISUALIZATION
+
 export const TIME_ZERO = { sec: 0, nsec: 0 };
 
 export const TRANSFORM_STAMPED_DATATYPES = new Set<string>();
@@ -321,6 +388,9 @@ addRosDataType(COMPRESSED_IMAGE_DATATYPES, "sensor_msgs/CompressedImage");
 
 export const POLYGON_STAMPED_DATATYPES = new Set<string>();
 addRosDataType(POLYGON_STAMPED_DATATYPES, "geometry_msgs/PolygonStamped");
+
+export const DETECTED_OBJECTS_DATATYPES = new Set<string>();
+addRosDataType(DETECTED_OBJECTS_DATATYPES, "autoware_auto_perception_msgs/DetectedObjects");
 
 // Expand a single ROS1 dataType into variations for ROS2 and protobufs,
 // then add them to the given output set
