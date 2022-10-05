@@ -21,7 +21,7 @@ type Vec4 = [number, number, number, number];
 const vec4ToOrientation = ([x, y, z, w]: Vec4) => ({ x, y, z, w });
 
 GeometryMsgs_PoseArray.parameters = { colorScheme: "dark" };
-function GeometryMsgs_PoseArray(): JSX.Element {
+export function GeometryMsgs_PoseArray(): JSX.Element {
   const topics: Topic[] = [
     { name: "/baselink_path", datatype: "geometry_msgs/PoseArray" },
     { name: "/sensor_path", datatype: "geometry_msgs/PoseArray" },
@@ -39,6 +39,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -54,6 +55,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         ),
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf3: MessageEvent<TransformStamped> = {
@@ -67,6 +69,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -87,6 +90,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         orientation: makeOrientation(i),
       })),
     },
+    datatype: "geometry_msgs/PoseArray",
     sizeInBytes: 0,
   };
 
@@ -100,6 +104,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         orientation: makeOrientation(i),
       })),
     },
+    datatype: "geometry_msgs/PoseArray",
     sizeInBytes: 0,
   };
 
@@ -113,6 +118,7 @@ function GeometryMsgs_PoseArray(): JSX.Element {
         orientation: makeOrientation(i),
       })),
     },
+    datatype: "geometry_msgs/PoseArray",
     sizeInBytes: 0,
   };
 

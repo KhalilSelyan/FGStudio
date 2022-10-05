@@ -90,6 +90,8 @@ const fixture = {
       topic: "/some/topic/with/state",
       receiveTime: message.header.stamp,
       message: { ...message, data: { value: idx } },
+      datatype: "msgs/SystemState",
+
       sizeInBytes: 0,
     })),
     "/some/topic/with/string_state": systemStateMessages.map((message, idx) => {
@@ -98,6 +100,7 @@ const fixture = {
         topic: "/some/topic/with/string_state",
         receiveTime: message.header.stamp,
         message: { ...message, data: { value: values[idx % values.length] } },
+        datatype: "msgs/SystemState",
         sizeInBytes: 0,
       };
     }),
@@ -133,6 +136,23 @@ export function OnePath(): JSX.Element {
       <StateTransitions
         overrideConfig={{
           paths: [{ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }],
+          isSynced: true,
+        }}
+      />
+    </PanelSetup>
+  );
+}
+
+WithSettings.parameters = { useReadySignal: true };
+export function WithSettings(): JSX.Element {
+  const readySignal = useReadySignal({ count: 3 });
+  const pauseFrame = useCallback(() => readySignal, [readySignal]);
+  return (
+    <PanelSetup fixture={fixture} pauseFrame={pauseFrame} includeSettings>
+      <StateTransitions
+        overrideConfig={{
+          paths: [{ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }],
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -151,6 +171,7 @@ export function MultiplePaths(): JSX.Element {
             value: "/some/topic/with/state.state",
             timestampMethod: "receiveTime",
           }),
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -179,6 +200,7 @@ export function MultiplePathsWithHover(): JSX.Element {
             value: "/some/topic/with/state.state",
             timestampMethod: "receiveTime",
           }),
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -194,6 +216,7 @@ export function LongPath(): JSX.Element {
       <StateTransitions
         overrideConfig={{
           paths: [{ value: "/some/topic/with/state.state", timestampMethod: "receiveTime" }],
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -209,6 +232,7 @@ export function JsonPath(): JSX.Element {
       <StateTransitions
         overrideConfig={{
           paths: [{ value: "/some/topic/with/state.data.value", timestampMethod: "receiveTime" }],
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -226,6 +250,7 @@ export function ColorClash(): JSX.Element {
           paths: [
             { value: "/some/topic/with/string_state.data.value", timestampMethod: "receiveTime" },
           ],
+          isSynced: true,
         }}
       />
     </PanelSetup>
@@ -241,6 +266,8 @@ const messageCache: BlockCache = {
           topic: "/blocks",
           receiveTime: message.header.stamp,
           message: { ...message, data: { value: idx } },
+          datatype: "msgs/SystemState",
+
           sizeInBytes: 0,
         })),
       },
@@ -252,6 +279,8 @@ const messageCache: BlockCache = {
           topic: "/blocks",
           receiveTime: message.header.stamp,
           message: { ...message, data: { value: idx } },
+          datatype: "msgs/SystemState",
+
           sizeInBytes: 0,
         })),
       },
@@ -267,6 +296,7 @@ const messageCache: BlockCache = {
           topic: "/blocks",
           receiveTime: message.header.stamp,
           message: { ...message, data: { value: idx } },
+          datatype: "msgs/SystemState",
           sizeInBytes: 0,
         })),
       },
@@ -291,6 +321,7 @@ export function Blocks(): JSX.Element {
             { value: "/blocks.state", timestampMethod: "receiveTime" },
             { value: "/blocks.state", timestampMethod: "receiveTime" },
           ],
+          isSynced: true,
         }}
       />
     </PanelSetup>

@@ -73,7 +73,7 @@ describe("BlockLoader", () => {
 
     const loader = new BlockLoader({
       maxBlocks: 5,
-      cacheSizeBytes: 1,
+      cacheSizeBytes: 5,
       minBlockDurationNs: 1,
       source,
       start: { sec: 0, nsec: 0 },
@@ -82,12 +82,13 @@ describe("BlockLoader", () => {
     });
 
     const msgEvents: MessageEvent<unknown>[] = [];
-    for (let i = 0; i < 5; ++i) {
+    for (let i = 0; i < 10; i += 3) {
       msgEvents.push({
         topic: "a",
         receiveTime: { sec: i, nsec: 0 },
         message: undefined,
-        sizeInBytes: 0,
+        sizeInBytes: 1,
+        datatype: "foo",
       });
     }
 
@@ -108,7 +109,7 @@ describe("BlockLoader", () => {
     let count = 0;
     await loader.startLoading({
       progress: async (progress) => {
-        if (++count < 3) {
+        if (++count < 4) {
           return;
         }
 
@@ -123,24 +124,17 @@ describe("BlockLoader", () => {
             blocks: [
               {
                 messagesByTopic: {
-                  a: [msgEvents[0], msgEvents[1]],
+                  a: [msgEvents[0]],
                 },
                 needTopics: new Set(),
-                sizeInBytes: 0,
+                sizeInBytes: 1,
               },
               {
                 messagesByTopic: {
-                  a: [msgEvents[2], msgEvents[3]],
+                  a: [msgEvents[1]],
                 },
                 needTopics: new Set(),
-                sizeInBytes: 0,
-              },
-              {
-                messagesByTopic: {
-                  a: [msgEvents[4]],
-                },
-                needTopics: new Set(),
-                sizeInBytes: 0,
+                sizeInBytes: 1,
               },
               {
                 messagesByTopic: {
@@ -151,10 +145,17 @@ describe("BlockLoader", () => {
               },
               {
                 messagesByTopic: {
-                  a: [],
+                  a: [msgEvents[2]],
                 },
                 needTopics: new Set(),
-                sizeInBytes: 0,
+                sizeInBytes: 1,
+              },
+              {
+                messagesByTopic: {
+                  a: [msgEvents[3]],
+                },
+                needTopics: new Set(),
+                sizeInBytes: 1,
               },
             ],
             startTime: { sec: 0, nsec: 0 },
@@ -187,6 +188,7 @@ describe("BlockLoader", () => {
         receiveTime: { sec: i, nsec: 0 },
         message: undefined,
         sizeInBytes: 0,
+        datatype: "foo",
       });
     }
 
@@ -295,6 +297,7 @@ describe("BlockLoader", () => {
         receiveTime: { sec: i, nsec: 0 },
         message: undefined,
         sizeInBytes: 0,
+        datatype: "foo",
       });
     }
 
@@ -516,21 +519,25 @@ describe("BlockLoader", () => {
 
     expect(messageIteratorCallArgs).toEqual([
       {
+        consumptionType: "full",
         topics: ["a"],
         start: { sec: 0, nsec: 0 },
         end: { sec: 9, nsec: 0 },
       },
       {
+        consumptionType: "full",
         topics: ["a"],
         start: { sec: 4, nsec: 500000003 },
         end: { sec: 9, nsec: 0 },
       },
       {
+        consumptionType: "full",
         topics: ["a"],
         start: { sec: 1, nsec: 500000001 },
         end: { sec: 4, nsec: 500000002 },
       },
       {
+        consumptionType: "full",
         topics: ["a"],
         start: { sec: 7, nsec: 500000005 },
         end: { sec: 9, nsec: 0 },
@@ -560,6 +567,7 @@ describe("BlockLoader", () => {
         receiveTime: { sec: i, nsec: 0 },
         message: undefined,
         sizeInBytes: 0,
+        datatype: "foo",
       });
     }
 

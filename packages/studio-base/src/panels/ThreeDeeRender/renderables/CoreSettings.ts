@@ -30,6 +30,8 @@ export const DEFAULT_PUBLISH_SETTINGS: RendererConfig["publish"] = {
   poseEstimateThetaDeviation: round(Math.PI / 12, 8),
 };
 
+const FOLLOW_TF_PATH = ["general", "followTf"];
+
 export class CoreSettings extends SceneExtension {
   public constructor(renderer: Renderer) {
     super("foxglove.CoreSettings", renderer);
@@ -75,7 +77,7 @@ export class CoreSettings extends SceneExtension {
       [this.renderer.followFrameId, config.followTf, this.renderer.renderFrameId],
       followTfOptions,
     );
-    const followTfError = this.renderer.settings.errors.errors.errorAtPath(["general", "followTf"]);
+    const followTfError = this.renderer.settings.errors.errors.errorAtPath(FOLLOW_TF_PATH);
 
     const followModeOptions = [
       { label: "Pose", value: "follow-pose" },
@@ -135,6 +137,17 @@ export class CoreSettings extends SceneExtension {
               precision: 2,
               value: config.scene.labelScaleFactor,
               placeholder: String(DEFAULT_LABEL_SCALE_FACTOR),
+            },
+            ignoreColladaUpAxis: {
+              label: "Ignore COLLADA <up_axis>",
+              help: "Match the behavior of rviz by ignoring the <up_axis> tag in COLLADA files",
+              input: "boolean",
+              value: config.scene.ignoreColladaUpAxis,
+              error:
+                (config.scene.ignoreColladaUpAxis ?? false) !==
+                this.renderer.modelCache.options.ignoreColladaUpAxis
+                  ? "This setting requires a restart to take effect"
+                  : undefined,
             },
           },
           children: {

@@ -7,6 +7,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
 import EventsProvider from "@foxglove/studio-base/providers/EventsProvider";
+import { StudioLogsSettingsProvider } from "@foxglove/studio-base/providers/StudioLogsSettingsProvider";
 import TimelineInteractionStateProvider from "@foxglove/studio-base/providers/TimelineInteractionStateProvider";
 
 import Workspace from "./Workspace";
@@ -54,6 +55,7 @@ type AppProps = {
   extensionLoaders: readonly ExtensionLoader[];
   nativeAppMenu?: INativeAppMenu;
   nativeWindow?: INativeWindow;
+  disableSignin?: boolean;
   enableDialogAuth?: boolean;
   enableLaunchPreferenceScreen?: boolean;
 };
@@ -76,6 +78,7 @@ export function App(props: AppProps): JSX.Element {
     dataSources,
     layoutStorage,
     consoleApi,
+    disableSignin,
     extensionLoaders,
     nativeAppMenu,
     nativeWindow,
@@ -91,6 +94,7 @@ export function App(props: AppProps): JSX.Element {
 
   const providers = [
     /* eslint-disable react/jsx-key */
+    <StudioLogsSettingsProvider />,
     <ConsoleApiContext.Provider value={consoleApi} />,
     <CurrentUserProviderComponent />,
     <ConsoleApiRemoteLayoutStorageProvider />,
@@ -140,7 +144,7 @@ export function App(props: AppProps): JSX.Element {
                 <DndProvider backend={HTML5Backend}>
                   <Suspense fallback={<></>}>
                     <PanelCatalogProvider>
-                      <Workspace deepLinks={deepLinks} />
+                      <Workspace deepLinks={deepLinks} disableSignin={disableSignin} />
                     </PanelCatalogProvider>
                   </Suspense>
                 </DndProvider>

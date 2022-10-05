@@ -180,10 +180,21 @@ class ConsoleApi {
     return await this.get<DeviceResponse>(`/v1/devices/${id}`);
   }
 
+  public async createEvent(params: {
+    deviceId: string;
+    timestamp: string;
+    durationNanos: string;
+    metadata: Record<string, string>;
+  }): Promise<ConsoleEvent> {
+    const rawEvent = await this.post<ConsoleEvent>(`/beta/device-events`, params);
+    return rawEvent;
+  }
+
   public async getEvents(params: {
     deviceId: string;
     start: string;
     end: string;
+    query?: string;
   }): Promise<EventsResponse> {
     const rawEvents = await this.get<EventsResponse>(`/beta/device-events`, params);
     return rawEvents.map((event) => {
@@ -247,17 +258,19 @@ class ConsoleApi {
   }
 
   public async coverage(params: {
-    deviceId: string;
-    start: string;
-    end: string;
+    deviceId?: string;
+    importId?: string;
+    start?: string;
+    end?: string;
   }): Promise<CoverageResponse[]> {
     return await this.get<CoverageResponse[]>("/v1/data/coverage", params);
   }
 
   public async topics(params: {
-    deviceId: string;
-    start: string;
-    end: string;
+    deviceId?: string;
+    importId?: string;
+    start?: string;
+    end?: string;
     includeSchemas?: boolean;
   }): Promise<readonly TopicResponse[]> {
     return (
@@ -276,9 +289,10 @@ class ConsoleApi {
   }
 
   public async stream(params: {
-    deviceId: string;
-    start: string;
-    end: string;
+    deviceId?: string;
+    importId?: string;
+    start?: string;
+    end?: string;
     topics: readonly string[];
     outputFormat?: "bag1" | "mcap0";
     replayPolicy?: "lastPerChannel" | "";
@@ -373,5 +387,5 @@ class ConsoleApi {
   }
 }
 
-export type { Org, DeviceCodeResponse, Session };
+export type { Org, DeviceCodeResponse, Session, CoverageResponse };
 export default ConsoleApi;

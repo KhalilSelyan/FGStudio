@@ -23,7 +23,7 @@ import { DeepPartial } from "ts-essentials";
 import { useDebouncedCallback } from "use-debounce";
 
 import Logger from "@foxglove/log";
-import { toNanoSec } from "@foxglove/rostime";
+import { isLessThan, Time, toNanoSec } from "@foxglove/rostime";
 import {
   LayoutActions,
   MessageEvent,
@@ -40,7 +40,6 @@ import PublishGoalIcon from "@foxglove/studio-base/components/PublishGoalIcon";
 import PublishPointIcon from "@foxglove/studio-base/components/PublishPointIcon";
 import PublishPoseEstimateIcon from "@foxglove/studio-base/components/PublishPoseEstimateIcon";
 import useCleanup from "@foxglove/studio-base/hooks/useCleanup";
-import { DEFAULT_PUBLISH_SETTINGS } from "@foxglove/studio-base/panels/ThreeDeeRender/renderables/CoreSettings";
 import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
 
 import { DebugGui } from "./DebugGui";
@@ -52,11 +51,14 @@ import { RendererContext, useRenderer, useRendererEvent } from "./RendererContex
 import { Stats } from "./Stats";
 import { CameraState, DEFAULT_CAMERA_STATE, MouseEventObject } from "./camera";
 import {
-  PublishDatatypes,
+  PublishRos1Datatypes,
+  PublishRos2Datatypes,
   makePointMessage,
   makePoseEstimateMessage,
   makePoseMessage,
 } from "./publish";
+import { DEFAULT_PUBLISH_SETTINGS } from "./renderables/CoreSettings";
+import type { LayerSettingsTransform } from "./renderables/FrameAxes";
 import { PublishClickEvent, PublishClickType } from "./renderables/PublishClickTool";
 
 const log = Logger.getLogger(__filename);
@@ -69,6 +71,7 @@ const PANEL_STYLE: React.CSSProperties = {
   display: "flex",
   position: "relative",
 };
+const TIME_ZERO = { sec: 0, nsec: 0 };
 
 type SubscriptionWithOptions = Subscription & {
   preload: boolean;
@@ -438,18 +441,23 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     );
     const publish = merge(cloneDeep(DEFAULT_PUBLISH_SETTINGS), partialConfig?.publish);
 
+    const transforms = (partialConfig?.transforms ?? {}) as Record<
+      string,
+      Partial<LayerSettingsTransform>
+    >;
+
     return {
       cameraState,
       followMode: partialConfig?.followMode ?? "follow-pose",
       followTf: partialConfig?.followTf,
       scene: partialConfig?.scene ?? {},
-      transforms: partialConfig?.transforms ?? {},
+      transforms,
       topics: partialConfig?.topics ?? {},
       layers: partialConfig?.layers ?? {},
       publish,
     };
   });
-  const configRef = useRef(config);
+  const configRef = useLatest(config);
   const { cameraState } = config;
   const backgroundColor = config.scene.backgroundColor;
 
@@ -457,7 +465,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   const [renderer, setRenderer] = useState<Renderer | undefined>(undefined);
   useEffect(
     () => setRenderer(canvas ? new Renderer(canvas, configRef.current) : undefined),
-    [canvas],
+    [canvas, configRef, config.scene.transforms?.enablePreloading],
   );
 
   const [colorScheme, setColorScheme] = useState<"dark" | "light" | undefined>();
@@ -468,6 +476,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   const [preloadedMessages, setPreloadedMessages] = useState<
     ReadonlyArray<MessageEvent<unknown>> | undefined
   >();
+  const lastPreloadedMessageTimeRef = useRef<Time>(TIME_ZERO);
   const [currentTime, setCurrentTime] = useState<bigint | undefined>();
   const [didSeek, setDidSeek] = useState<boolean>(false);
 
@@ -599,9 +608,10 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
           setCurrentTime(toNanoSec(renderState.currentTime));
         }
 
-        // Increment the seek count if didSeek is set to true, to trigger a
-        // state flush in Renderer
+        // Check if didSeek is set to true to reset the preloadedMessageTime and
+        // trigger a state flush in Renderer
         if (renderState.didSeek === true) {
+          lastPreloadedMessageTimeRef.current = TIME_ZERO;
           setDidSeek(true);
         }
 
@@ -730,6 +740,34 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     }
   }, [backgroundColor, colorScheme, renderer]);
 
+  // Handle preloaded messages and render a frame if new messages are available
+  useEffect(() => {
+    if (!renderer || !preloadedMessages) {
+      return;
+    }
+
+    for (const message of preloadedMessages) {
+      // Skip preloaded messages before the last receiveTime we've previously processed
+      if (isLessThan(message.receiveTime, lastPreloadedMessageTimeRef.current)) {
+        continue;
+      }
+
+      const datatype = topicsToDatatypes.get(message.topic);
+      if (!datatype) {
+        continue;
+      }
+
+      renderer.addMessageEvent(message, datatype);
+    }
+
+    const lastMessage = preloadedMessages[preloadedMessages.length - 1];
+    if (lastMessage) {
+      lastPreloadedMessageTimeRef.current = lastMessage.receiveTime;
+    }
+
+    renderRef.current.needsRender = true;
+  }, [preloadedMessages, renderer, topicsToDatatypes]);
+
   // Handle messages and render a frame if new messages are available
   useEffect(() => {
     if (!renderer || !messages) {
@@ -747,24 +785,6 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
     renderRef.current.needsRender = true;
   }, [messages, renderer, topicsToDatatypes]);
-
-  // Handle preloaded messages and render a frame if new messages are available
-  useEffect(() => {
-    if (!renderer || !preloadedMessages) {
-      return;
-    }
-
-    for (const message of preloadedMessages) {
-      const datatype = topicsToDatatypes.get(message.topic);
-      if (!datatype) {
-        continue;
-      }
-
-      renderer.addMessageEvent(message, datatype);
-    }
-
-    renderRef.current.needsRender = true;
-  }, [preloadedMessages, renderer, topicsToDatatypes]);
 
   // Update the renderer when the camera moves
   useEffect(() => {
@@ -833,14 +853,12 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
   }, [config.publish.poseTopic, config.publish.pointTopic, config.publish.poseEstimateTopic]);
 
   useEffect(() => {
-    context.advertise?.(publishTopics.goal, "geometry_msgs/PoseStamped", {
-      datatypes: PublishDatatypes,
-    });
-    context.advertise?.(publishTopics.point, "geometry_msgs/PointStamped", {
-      datatypes: PublishDatatypes,
-    });
+    const datatypes =
+      context.dataSourceProfile === "ros2" ? PublishRos2Datatypes : PublishRos1Datatypes;
+    context.advertise?.(publishTopics.goal, "geometry_msgs/PoseStamped", { datatypes });
+    context.advertise?.(publishTopics.point, "geometry_msgs/PointStamped", { datatypes });
     context.advertise?.(publishTopics.pose, "geometry_msgs/PoseWithCovarianceStamped", {
-      datatypes: PublishDatatypes,
+      datatypes,
     });
 
     return () => {
@@ -848,7 +866,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       context.unadvertise?.(publishTopics.point);
       context.unadvertise?.(publishTopics.pose);
     };
-  }, [publishTopics, context]);
+  }, [publishTopics, context, context.dataSourceProfile]);
 
   const latestPublishConfig = useLatest(config.publish);
 

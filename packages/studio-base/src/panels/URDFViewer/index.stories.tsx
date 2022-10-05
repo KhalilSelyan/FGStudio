@@ -77,6 +77,7 @@ export function JointPositionFromTopic(): JSX.Element {
       velocity: [0],
       effort: [0],
     },
+    datatype: "sensor_msgs/JointState",
     sizeInBytes: 0,
   };
   return (
@@ -102,6 +103,16 @@ export function ManualJointPosition(): JSX.Element {
         />
       </PanelSetup>
     </ExampleAssetsProvider>
+  );
+}
+
+export function WithError(): JSX.Element {
+  return (
+    <PanelSetup
+      fixture={{ activeData: { parameters: new Map([["/robot_description", "hello"]]) } }}
+    >
+      <URDFViewer />
+    </PanelSetup>
   );
 }
 

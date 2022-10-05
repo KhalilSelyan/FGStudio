@@ -53,6 +53,7 @@ import Sidebar, { SidebarItem } from "@foxglove/studio-base/components/Sidebar";
 import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent";
 import { SignInFormModal } from "@foxglove/studio-base/components/SignInFormModal";
 import Stack from "@foxglove/studio-base/components/Stack";
+import { StudioLogsSettingsSidebar } from "@foxglove/studio-base/components/StudioLogsSettingsSidebar";
 import { SyncAdapters } from "@foxglove/studio-base/components/SyncAdapters";
 import VariablesSidebar from "@foxglove/studio-base/components/VariablesSidebar";
 import { useAssets } from "@foxglove/studio-base/context/AssetsContext";
@@ -105,7 +106,8 @@ type SidebarItemKey =
   | "account"
   | "layouts"
   | "preferences"
-  | "help";
+  | "help"
+  | "studio-logs-settings";
 
 const selectedLayoutIdSelector = (state: LayoutState) => state.selectedLayout?.id;
 
@@ -148,6 +150,7 @@ function AddPanel() {
 
 type WorkspaceProps = {
   deepLinks?: string[];
+  disableSignin?: boolean;
 };
 
 const DEFAULT_DEEPLINKS = Object.freeze([]);
@@ -182,7 +185,8 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     return extensions;
   }, [availableSources]);
 
-  const supportsAccountSettings = useContext(ConsoleApiContext) != undefined;
+  const supportsAccountSettings =
+    useContext(ConsoleApiContext) != undefined && props.disableSignin !== true;
 
   // We use playerId to detect when a player changes for RemountOnValueChange below
   // see comment below above the RemountOnValueChange component
@@ -198,6 +202,10 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
 
   const [showOpenDialogOnStartup = true] = useAppConfigurationValue<boolean>(
     AppSetting.SHOW_OPEN_DIALOG_ON_STARTUP,
+  );
+
+  const [enableStudioLogsSidebar = false] = useAppConfigurationValue<boolean>(
+    AppSetting.SHOW_DEBUG_PANELS,
   );
 
   const showSignInForm = currentUserRequired && currentUser == undefined;
@@ -517,6 +525,14 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
       ["extensions", { iconName: "AddIn", title: "Extensions", component: ExtensionsSidebar }],
     ]);
 
+    if (enableStudioLogsSidebar) {
+      topItems.set("studio-logs-settings", {
+        iconName: "BacklogList",
+        title: "Studio Logs Settings",
+        component: StudioLogsSettingsSidebar,
+      });
+    }
+
     const bottomItems = new Map<SidebarItemKey, SidebarItem>([
       ["help", { iconName: "QuestionCircle", title: "Help", component: HelpSidebar }],
     ]);
@@ -527,16 +543,22 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
         title: currentUser != undefined ? `Signed in as ${currentUser.email}` : "Account",
         component: AccountSettings,
       });
-
-      bottomItems.set("preferences", {
-        iconName: "Settings",
-        title: "Preferences",
-        component: Preferences,
-      });
     }
 
+    bottomItems.set("preferences", {
+      iconName: "Settings",
+      title: "Preferences",
+      component: Preferences,
+    });
+
     return [topItems, bottomItems];
-  }, [DataSourceSidebarItem, playerProblems, supportsAccountSettings, currentUser]);
+  }, [
+    DataSourceSidebarItem,
+    playerProblems,
+    enableStudioLogsSidebar,
+    supportsAccountSettings,
+    currentUser,
+  ]);
 
   const keyDownHandlers = useMemo(
     () => ({

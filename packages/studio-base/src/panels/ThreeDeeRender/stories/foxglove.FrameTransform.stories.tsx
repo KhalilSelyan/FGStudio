@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { fromSec } from "@foxglove/rostime";
-import type { FrameTransform } from "@foxglove/schemas/schemas/typescript";
+import type { FrameTransform } from "@foxglove/schemas";
 import { MessageEvent, Topic } from "@foxglove/studio";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
@@ -35,6 +35,7 @@ export function FoxgloveFrameTransform(): JSX.Element {
       translation: VEC3_ZERO,
       rotation: QUAT_IDENTITY,
     },
+    datatype: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
   // backwards compatibility with legacy message format
@@ -51,6 +52,7 @@ export function FoxgloveFrameTransform(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
   const pass1 = makePass({

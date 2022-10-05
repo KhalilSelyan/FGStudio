@@ -20,15 +20,14 @@ import { last } from "lodash";
 import React, {
   useState,
   useCallback,
-  useContext,
   useMemo,
   useRef,
   ComponentType,
   Profiler,
   MouseEventHandler,
   useLayoutEffect,
-  useEffect,
   CSSProperties,
+  useContext,
 } from "react";
 import {
   MosaicContext,
@@ -45,6 +44,7 @@ import { useMountedState } from "react-use";
 import { useShallowMemo } from "@foxglove/hooks";
 import { useConfigById } from "@foxglove/studio-base/PanelAPI";
 import KeyListener from "@foxglove/studio-base/components/KeyListener";
+import { MosaicPathContext } from "@foxglove/studio-base/components/MosaicPathContext";
 import PanelContext from "@foxglove/studio-base/components/PanelContext";
 import PanelErrorBoundary from "@foxglove/studio-base/components/PanelErrorBoundary";
 import { PanelRoot, PANEL_ROOT_CLASS_NAME } from "@foxglove/studio-base/components/PanelRoot";
@@ -192,6 +192,7 @@ export default function Panel<
       updatePanelConfigs,
       createTabPanel,
       closePanel,
+      swapPanel,
       getCurrentLayoutState,
     } = useCurrentLayoutActions();
 
@@ -203,7 +204,10 @@ export default function Panel<
     const [hasFullscreenDescendant, _setHasFullscreenDescendant] = useState(false);
     const panelRootRef = useRef<HTMLDivElement>(ReactNull);
     const panelCatalog = usePanelCatalog();
-    const isTopLevelPanel = mosaicWindowActions.getPath().length === 0 && tabId == undefined;
+
+    const mosaicPath = useContext(MosaicPathContext);
+    const isTopLevelPanel =
+      mosaicPath != undefined && mosaicPath.length === 0 && tabId == undefined;
 
     // There may be a parent panel (when a panel is in a tab).
     const parentPanelContext = useContext(PanelContext);
@@ -326,6 +330,23 @@ export default function Panel<
         panelCatalog,
         savePanelConfigs,
       ],
+    );
+
+    const replacePanel = useCallback(
+      (newPanelType: string, config: Record<string, unknown>) => {
+        if (childId == undefined) {
+          return;
+        }
+        swapPanel({
+          tabId,
+          originalId: childId,
+          type: newPanelType,
+          root: mosaicActions.getRoot() as MosaicNode<string>,
+          path: mosaicWindowActions.getPath(),
+          config,
+        });
+      },
+      [childId, mosaicActions, mosaicWindowActions, swapPanel, tabId],
     );
 
     const { panelSettingsOpen } = useWorkspace();
@@ -475,16 +496,6 @@ export default function Panel<
       [exitFullscreen],
     );
 
-    /* Ensure user exits full-screen mode when leaving window, even if key is still pressed down */
-    useEffect(() => {
-      const listener = () => {
-        exitFullscreen();
-        setQuickActionsKeyPressed(false);
-      };
-      window.addEventListener("blur", listener);
-      return () => window.removeEventListener("blur", listener);
-    }, [exitFullscreen]);
-
     const otherPanelProps = useShallowMemo(otherProps);
     const childProps = useMemo(
       // We have to lie to TypeScript with "as PanelProps" because the "PanelProps extends {...}"
@@ -541,6 +552,7 @@ export default function Panel<
             saveConfig: saveConfig as SaveConfig<PanelConfig>,
             updatePanelConfigs,
             openSiblingPanel,
+            replacePanel,
             enterFullscreen,
             exitFullscreen,
             setHasFullscreenDescendant,

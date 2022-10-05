@@ -4,7 +4,7 @@
 
 import { vec3 } from "gl-matrix";
 
-import type { PointCloud } from "@foxglove/schemas/schemas/typescript";
+import type { PointCloud } from "@foxglove/schemas";
 import { MessageEvent, Topic } from "@foxglove/studio";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
@@ -53,6 +53,7 @@ function Foxglove_PointCloud({ rgbaFieldName }: { rgbaFieldName: string }): JSX.
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -66,6 +67,7 @@ function Foxglove_PointCloud({ rgbaFieldName }: { rgbaFieldName: string }): JSX.
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -111,6 +113,7 @@ function Foxglove_PointCloud({ rgbaFieldName }: { rgbaFieldName: string }): JSX.
       ],
       data,
     },
+    datatype: "foxglove.PointCloud",
     sizeInBytes: 0,
   };
 
@@ -178,6 +181,7 @@ export function Foxglove_PointCloud_Intensity(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -191,6 +195,7 @@ export function Foxglove_PointCloud_Intensity(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
+    datatype: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -282,6 +287,7 @@ export function Foxglove_PointCloud_Intensity(): JSX.Element {
       ],
       data,
     },
+    datatype: "foxglove.PointCloud",
     sizeInBytes: 0,
   };
 
@@ -365,6 +371,7 @@ export function Foxglove_PointCloud_TwoDimensions(): JSX.Element {
       ],
       data,
     },
+    datatype: "foxglove.PointCloud",
     sizeInBytes: 0,
   };
 

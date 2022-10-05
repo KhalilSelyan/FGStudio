@@ -11,11 +11,13 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { IconButton, IList, List } from "@fluentui/react";
-import { Box } from "@mui/material";
+import { List, IList } from "@fluentui/react/lib/List";
+import DoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import { Fab } from "@mui/material";
 import produce from "immer";
 import { set } from "lodash";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { makeStyles } from "tss-react/mui";
 
 import { SettingsTreeAction } from "@foxglove/studio";
 import { useDataSourceInfo, useMessagesByTopic } from "@foxglove/studio-base/PanelAPI";
@@ -51,7 +53,17 @@ const SUPPORTED_DATATYPES = [
   "foxglove.Log",
 ];
 
+const useStyles = makeStyles()((theme) => ({
+  floatingButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    margin: theme.spacing(1.5),
+  },
+}));
+
 const LogPanel = React.memo(({ config, saveConfig }: Props) => {
+  const { classes } = useStyles();
   const { topics } = useDataSourceInfo();
   const { minLogLevel, searchTerms } = config;
   const { timeFormat, timeZone } = useAppTimeFormat();
@@ -59,9 +71,7 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
   const updatePanelSettingsTree = usePanelSettingsTreeUpdate();
 
   const onFilterChange = useCallback<FilterBarProps["onFilterChange"]>(
-    (filter) => {
-      saveConfig({ minLogLevel: filter.minLogLevel, searchTerms: filter.searchTerms });
-    },
+    (filter) => saveConfig({ minLogLevel: filter.minLogLevel, searchTerms: filter.searchTerms }),
     [saveConfig],
   );
 
@@ -71,15 +81,6 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
     () => topics.filter((topic) => SUPPORTED_DATATYPES.includes(topic.datatype)),
     [topics],
   );
-
-  const datatypeByTopic = useMemo(() => {
-    const out = new Map<string, string>();
-
-    for (const topic of topics) {
-      out.set(topic.name, topic.datatype);
-    }
-    return out;
-  }, [topics]);
 
   // Pick the first available topic, if there are not available topics, then we inform the user
   // nothing is publishing log messages
@@ -128,15 +129,9 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
 
   const searchTermsSet = useMemo(() => new Set(searchTerms), [searchTerms]);
 
-  const topicDatatype = useMemo(
-    () => availableTopics.find((topic) => topic.name === topicToRender)?.datatype,
-    [availableTopics, topicToRender],
-  );
-
   const filteredMessages = useMemo(
-    () =>
-      topicDatatype ? filterMessages(msgEvents, { minLogLevel, searchTerms, topicDatatype }) : [],
-    [msgEvents, minLogLevel, searchTerms, topicDatatype],
+    () => filterMessages(msgEvents, { minLogLevel, searchTerms }),
+    [msgEvents, minLogLevel, searchTerms],
   );
 
   const listRef = useRef<IList>(ReactNull);
@@ -183,7 +178,13 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
         />
       </PanelToolbar>
       <Stack flexGrow={1} overflow="hidden">
-        <Stack ref={divRef} fullHeight overflow="auto" direction="column-reverse">
+        <Stack
+          ref={divRef}
+          fullHeight
+          overflowY="auto"
+          direction="column-reverse"
+          data-testid="log-messages-list"
+        >
           {/* items property wants a mutable array but filteredMessages is readonly */}
           <List
             componentRef={listRef}
@@ -193,12 +194,7 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
                 return;
               }
 
-              const datatype = datatypeByTopic.get(item.topic);
-              if (!datatype) {
-                return;
-              }
-
-              const normalizedLog = normalizedLogMessage(datatype, item["message"]);
+              const normalizedLog = normalizedLogMessage(item.datatype, item["message"]);
               return (
                 <LogMessage
                   value={normalizedLog}
@@ -211,13 +207,14 @@ const LogPanel = React.memo(({ config, saveConfig }: Props) => {
         </Stack>
       </Stack>
       {hasUserScrolled && (
-        <Box position="absolute" bottom={10} right={10}>
-          <IconButton
-            iconProps={{ iconName: "DoubleChevronDown" }}
-            title="Scroll to bottom"
-            onClick={scrollToBottomAction}
-          />
-        </Box>
+        <Fab
+          size="small"
+          title="Scroll to bottom"
+          onClick={scrollToBottomAction}
+          className={classes.floatingButton}
+        >
+          <DoubleArrowDownIcon />
+        </Fab>
       )}
     </Stack>
   );

@@ -13,6 +13,7 @@
 
 import { screen } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
+import { range } from "lodash";
 import TestUtils from "react-dom/test-utils";
 
 import Log from "@foxglove/studio-base/panels/Log";
@@ -34,6 +35,7 @@ const fixture = {
           msg: "Couldn't find int 83757.",
           name: "/some_topic",
         },
+        datatype: "rosgraph_msgs/Log",
         sizeInBytes: 0,
       },
       {
@@ -48,6 +50,7 @@ const fixture = {
           msg: "Couldn't find int 2121.",
           name: "/other_node",
         },
+        datatype: "rosgraph_msgs/Log",
         sizeInBytes: 0,
       },
       {
@@ -62,6 +65,7 @@ const fixture = {
           msg: "Lorem ipsum blah blah. This message should\nshow up as multiple lines",
           name: "/other_node",
         },
+        datatype: "rosgraph_msgs/Log",
         sizeInBytes: 0,
       },
       {
@@ -77,6 +81,7 @@ const fixture = {
           line: 491,
           topics: [],
         },
+        datatype: "rosgraph_msgs/Log",
         sizeInBytes: 0,
       },
       {
@@ -92,11 +97,37 @@ const fixture = {
           line: 491,
           topics: [],
         },
+        datatype: "rosgraph_msgs/Log",
         sizeInBytes: 0,
       },
     ],
   },
 };
+
+function makeLongFixture() {
+  const levels = [1, 2, 4, 8, 16];
+
+  return {
+    topics: [{ name: "/rosout", datatype: "rosgraph_msgs/Log" }],
+    frame: {
+      "/rosout": range(200).map((idx) => ({
+        topic: "/rosout",
+        receiveTime: { sec: 10 * idx, nsec: 0 },
+        message: {
+          file: "some_topic_utils/src/foo.cpp",
+          function: "vector<int> some_topic::findInt",
+          header: { stamp: { sec: 123, nsec: 0 } },
+          level: levels[idx % levels.length],
+          line: 242,
+          msg: `Couldn't find int ${idx + 1}.`,
+          name: "/some_topic",
+        },
+        datatype: "rosgraph_msgs/Log",
+        sizeInBytes: 0,
+      })),
+    },
+  };
+}
 
 export default {
   title: "panels/Log",
@@ -106,6 +137,14 @@ export default {
 export const Simple = (): JSX.Element => {
   return (
     <PanelSetup fixture={fixture}>
+      <Log />
+    </PanelSetup>
+  );
+};
+
+export const Scrolled = (): JSX.Element => {
+  return (
+    <PanelSetup fixture={makeLongFixture()}>
       <Log />
     </PanelSetup>
   );
@@ -222,6 +261,7 @@ export const FoxgloveLog = (): JSX.Element => {
             line: 242,
             message: "Couldn't find int 83757.",
           },
+          datatype: "foxglove.Log",
           sizeInBytes: 0,
         },
         {
@@ -235,6 +275,7 @@ export const FoxgloveLog = (): JSX.Element => {
             line: 242,
             message: "Couldn't find int 2121.",
           },
+          datatype: "foxglove.Log",
           sizeInBytes: 0,
         },
         {
@@ -248,6 +289,7 @@ export const FoxgloveLog = (): JSX.Element => {
             line: 242,
             message: "Lorem ipsum blah blah. This message should\nshow up as multiple lines",
           },
+          datatype: "foxglove.Log",
           sizeInBytes: 0,
         },
         {
@@ -261,6 +303,7 @@ export const FoxgloveLog = (): JSX.Element => {
             file: "somefile.cpp",
             line: 491,
           },
+          datatype: "foxglove.Log",
           sizeInBytes: 0,
         },
         {
@@ -273,6 +316,7 @@ export const FoxgloveLog = (): JSX.Element => {
             file: "somefile.cpp",
             line: 491,
           },
+          datatype: "foxglove.Log",
           sizeInBytes: 0,
         },
       ],

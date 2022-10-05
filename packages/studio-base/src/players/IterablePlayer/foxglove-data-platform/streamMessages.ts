@@ -25,13 +25,21 @@ export type ParsedChannelAndEncodings = {
   parsedChannel: ParsedChannel;
 };
 
-export default async function* streamMessages({
+/**
+ * The console api methods used by streamMessages. This scopes the required interface to a small
+ * subset of ConsoleApi to make it easier to mock/stub for tests.
+ */
+interface StreamMessageApi {
+  stream: ConsoleApi["stream"];
+}
+
+export async function* streamMessages({
   api,
   signal,
   parsedChannelsByTopic,
   params,
 }: {
-  api: ConsoleApi;
+  api: StreamMessageApi;
 
   /**
    * An AbortSignal allowing the stream request to be canceled. When the signal is aborted, the
@@ -41,10 +49,10 @@ export default async function* streamMessages({
   signal?: AbortSignal;
 
   /** Parameters indicating the time range to stream. */
-  params: {
-    deviceId: string;
-    start: Time;
-    end: Time;
+  params: (
+    | { importId: string; deviceId?: string; start?: Time; end?: Time }
+    | { importId?: string; deviceId: string; start: Time; end: Time }
+  ) & {
     topics: readonly string[];
     replayPolicy?: "lastPerChannel" | "";
     replayLookbackSeconds?: number;
@@ -59,18 +67,20 @@ export default async function* streamMessages({
   parsedChannelsByTopic: Map<string, ParsedChannelAndEncodings[]>;
 }): AsyncGenerator<MessageEvent<unknown>[]> {
   const controller = new AbortController();
-  signal?.addEventListener("abort", () => {
+  const abortHandler = () => {
     log.debug("Manual abort of streamMessages", params);
     controller.abort();
-  });
+  };
+  signal?.addEventListener("abort", abortHandler);
   const decompressHandlers = await loadDecompressHandlers();
 
   log.debug("streamMessages", params);
   const startTimer = performance.now();
   const { link: mcapUrl } = await api.stream({
     deviceId: params.deviceId,
-    start: toRFC3339String(params.start),
-    end: toRFC3339String(params.end),
+    importId: params.importId,
+    start: params.start ? toRFC3339String(params.start) : undefined,
+    end: params.end ? toRFC3339String(params.end) : undefined,
     topics: params.topics,
     outputFormat: "mcap0",
     replayPolicy: params.replayPolicy,
@@ -104,7 +114,11 @@ export default async function* streamMessages({
   const schemasById = new Map<number, Mcap0Types.TypedMcapRecords["Schema"]>();
   const channelInfoById = new Map<
     number,
-    { channel: Mcap0Types.TypedMcapRecords["Channel"]; parsedChannel: ParsedChannel }
+    {
+      channel: Mcap0Types.TypedMcapRecords["Channel"];
+      parsedChannel: ParsedChannel;
+      schemaName: string;
+    }
   >();
 
   let totalMessages = 0;
@@ -141,7 +155,11 @@ export default async function* streamMessages({
             info.schemaEncoding === schema.encoding &&
             isEqual(info.schema, schema.data)
           ) {
-            channelInfoById.set(record.id, { channel: record, parsedChannel: info.parsedChannel });
+            channelInfoById.set(record.id, {
+              channel: record,
+              parsedChannel: info.parsedChannel,
+              schemaName: schema.name,
+            });
             return;
           }
         }
@@ -162,7 +180,7 @@ export default async function* streamMessages({
 
         parsedChannelsByTopic.set(record.topic, parsedChannels);
 
-        channelInfoById.set(record.id, { channel: record, parsedChannel });
+        channelInfoById.set(record.id, { channel: record, parsedChannel, schemaName: schema.name });
 
         const err = new Error(
           `No pre-initialized reader for ${record.topic} (message encoding ${record.messageEncoding}, schema encoding ${schema.encoding}, schema name ${schema.name})`,
@@ -183,6 +201,7 @@ export default async function* streamMessages({
           receiveTime,
           message: info.parsedChannel.deserializer(record.data),
           sizeInBytes: record.data.byteLength,
+          datatype: info.schemaName,
         });
         return;
       }
@@ -219,6 +238,7 @@ export default async function* streamMessages({
       // If the caller called generator.return() in between body chunks, automatically cancel the request.
       log.debug("Automatic abort of streamMessages", params);
     }
+    signal?.removeEventListener("abort", abortHandler);
     controller.abort();
   }
 

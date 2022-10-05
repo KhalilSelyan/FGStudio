@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import Logger from "@foxglove/log";
-import { definitions as rosCommonDefinitions } from "@foxglove/rosmsg-msgs-common";
+import { ros1 } from "@foxglove/rosmsg-msgs-common";
 import { Time, fromMicros, isTimeInRangeInclusive, toMicroSec } from "@foxglove/rostime";
 import { MessageEvent, ParameterValue } from "@foxglove/studio";
 import {
@@ -69,7 +69,7 @@ export class UlogIterableSource implements IIterableSource {
 
     topics.push({ name: LOG_TOPIC, datatype: "rosgraph_msgs/Log" });
     topicStats.set(LOG_TOPIC, { numMessages: this.ulog.logCount() ?? 0 });
-    datatypes.set("rosgraph_msgs/Log", rosCommonDefinitions["rosgraph_msgs/Log"]);
+    datatypes.set("rosgraph_msgs/Log", ros1["rosgraph_msgs/Log"]);
 
     for (const msgDef of header.definitions.values()) {
       datatypes.set(msgDef.name, messageDefinitionToRos(msgDef));
@@ -143,7 +143,8 @@ export class UlogIterableSource implements IIterableSource {
       if (msg.type === MessageType.Data) {
         const timestamp = (msg.value as { timestamp: bigint }).timestamp;
         const receiveTime = fromMicros(Number(timestamp));
-        const topic = messageIdToTopic(msg.msgId, this.ulog);
+        const sub = this.ulog.subscriptions.get(msg.msgId);
+        const topic = sub?.name;
         if (topic && topics.includes(topic) && isTimeInRangeInclusive(receiveTime, start, end)) {
           yield {
             msgEvent: {
@@ -151,6 +152,7 @@ export class UlogIterableSource implements IIterableSource {
               receiveTime,
               message: msg.value,
               sizeInBytes: msg.data.byteLength,
+              datatype: sub.name,
             },
             connectionId: undefined,
             problem: undefined,
@@ -172,6 +174,7 @@ export class UlogIterableSource implements IIterableSource {
                 msg: msg.message,
                 name: "",
               },
+              datatype: "rosgraph_msgs/Log",
               sizeInBytes: msg.size,
             },
             connectionId: undefined,

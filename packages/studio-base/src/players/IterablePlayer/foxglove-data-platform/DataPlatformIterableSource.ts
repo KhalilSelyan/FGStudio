@@ -14,6 +14,8 @@ import {
   isLessThan,
   Time,
   toRFC3339String,
+  add as addTime,
+  compare,
 } from "@foxglove/rostime";
 import {
   PlayerProblem,
@@ -21,7 +23,7 @@ import {
   MessageEvent,
   TopicStats,
 } from "@foxglove/studio-base/players/types";
-import ConsoleApi from "@foxglove/studio-base/services/ConsoleApi";
+import ConsoleApi, { CoverageResponse } from "@foxglove/studio-base/services/ConsoleApi";
 import { RosDatatypes } from "@foxglove/studio-base/types/RosDatatypes";
 import { formatTimeRaw } from "@foxglove/studio-base/util/time";
 
@@ -32,23 +34,36 @@ import {
   IteratorResult,
   GetBackfillMessagesArgs,
 } from "../IIterableSource";
-import streamMessages, { ParsedChannelAndEncodings } from "./streamMessages";
+import { streamMessages, ParsedChannelAndEncodings } from "./streamMessages";
 
 const log = Logger.getLogger(__filename);
 
+/**
+ * The console api methods used by DataPlatformIterableSource.
+ *
+ * This scopes the required interface to a small subset of ConsoleApi to make it easier to mock/stub
+ * for tests.
+ */
+export type DataPlatformInterableSourceConsoleApi = Pick<
+  ConsoleApi,
+  "coverage" | "topics" | "getDevice" | "stream"
+>;
+
 type DataPlatformIterableSourceOptions = {
-  api: ConsoleApi;
-  deviceId: string;
-  start: Time;
-  end: Time;
+  api: DataPlatformInterableSourceConsoleApi;
+  deviceId?: string;
+  importId?: string;
+  start?: Time;
+  end?: Time;
 };
 
 export class DataPlatformIterableSource implements IIterableSource {
-  private readonly _consoleApi: ConsoleApi;
+  private readonly _consoleApi: DataPlatformInterableSourceConsoleApi;
 
-  private _start: Time;
-  private _end: Time;
-  private _deviceId: string;
+  private _start: Time | undefined;
+  private _end: Time | undefined;
+  private readonly _deviceId: string | undefined;
+  private readonly _importId: string | undefined;
   private _knownTopicNames: string[] = [];
 
   /**
@@ -58,34 +73,43 @@ export class DataPlatformIterableSource implements IIterableSource {
    */
   private _parsedChannelsByTopic = new Map<string, ParsedChannelAndEncodings[]>();
 
+  private _coverage: CoverageResponse[] = [];
+
   public constructor(options: DataPlatformIterableSourceOptions) {
     this._consoleApi = options.api;
     this._start = options.start;
     this._end = options.end;
     this._deviceId = options.deviceId;
+    this._importId = options.importId;
   }
 
   public async initialize(): Promise<Initalization> {
     const [coverage, rawTopics] = await Promise.all([
       this._consoleApi.coverage({
-        deviceId: this._deviceId,
-        start: toRFC3339String(this._start),
-        end: toRFC3339String(this._end),
+        ...(this._importId && { importId: this._importId }),
+        ...(this._deviceId && { deviceId: this._deviceId }),
+        ...(this._start && { start: toRFC3339String(this._start) }),
+        ...(this._end && { end: toRFC3339String(this._end) }),
       }),
       this._consoleApi.topics({
-        deviceId: this._deviceId,
-        start: toRFC3339String(this._start),
-        end: toRFC3339String(this._end),
+        ...(this._importId && { importId: this._importId }),
+        ...(this._deviceId && { deviceId: this._deviceId }),
+        ...(this._start && { start: toRFC3339String(this._start) }),
+        ...(this._end && { end: toRFC3339String(this._end) }),
         includeSchemas: true,
       }),
     ]);
     if (rawTopics.length === 0 || coverage.length === 0) {
       throw new Error(
-        `No data available for ${this._deviceId} between ${formatTimeRaw(
-          this._start,
-        )} and ${formatTimeRaw(this._end)}.`,
+        this._deviceId && this._start && this._end
+          ? `No data available for ${this._deviceId} between ${formatTimeRaw(
+              this._start,
+            )} and ${formatTimeRaw(this._end)}.`
+          : `No data available for ${this._importId}`,
       );
     }
+
+    this._coverage = coverage;
 
     // Truncate start/end time to coverage range
     const coverageStart = minBy(coverage, (c) => c.start);
@@ -100,13 +124,15 @@ export class DataPlatformIterableSource implements IIterableSource {
       );
     }
 
-    const device = await this._consoleApi.getDevice(this._deviceId);
+    const device = await this._consoleApi.getDevice(
+      this._deviceId ?? coverageStart?.deviceId ?? "",
+    );
 
-    if (isLessThan(this._start, coverageStartTime)) {
+    if (!this._start || isLessThan(this._start, coverageStartTime)) {
       log.debug("Increased start time from", this._start, "to", coverageStartTime);
       this._start = coverageStartTime;
     }
-    if (isGreaterThan(this._end, coverageEndTime)) {
+    if (!this._end || isGreaterThan(this._end, coverageEndTime)) {
       log.debug("Reduced end time from", this._end, "to", coverageEndTime);
       this._end = coverageEndTime;
     }
@@ -177,8 +203,11 @@ export class DataPlatformIterableSource implements IIterableSource {
   public async *messageIterator(
     args: MessageIteratorArgs,
   ): AsyncIterableIterator<Readonly<IteratorResult>> {
+    log.debug("message iterator", args);
+
     const api = this._consoleApi;
     const deviceId = this._deviceId;
+    const importId = this._importId;
     const parsedChannelsByTopic = this._parsedChannelsByTopic;
 
     // Data platform treats topic array length 0 as "all topics". Until that is changed, we filter out
@@ -193,22 +222,90 @@ export class DataPlatformIterableSource implements IIterableSource {
       return this._knownTopicNames.includes(topicName) ? count + 1 : count;
     }, 0);
     if (matchingTopics === 0) {
+      log.debug("no matching topics to stream");
+      return;
+    }
+
+    if (!this._start || !this._end || (!deviceId && !importId)) {
+      log.debug("source needs to be initialized");
       return;
     }
 
     const streamStart = args.start ?? this._start;
     const streamEnd = clampTime(args.end ?? this._end, this._start, this._end);
 
-    const stream = streamMessages({
-      api,
-      parsedChannelsByTopic,
-      params: { deviceId, start: streamStart, end: streamEnd, topics: args.topics },
-    });
+    if (args.consumptionType === "full") {
+      const stream = streamMessages({
+        api,
+        parsedChannelsByTopic,
+        params: {
+          ...(deviceId ? { deviceId } : { importId: importId! }),
+          start: streamStart,
+          end: streamEnd,
+          topics: args.topics,
+        },
+      });
 
-    for await (const messages of stream) {
-      for (const message of messages) {
-        yield { connectionId: undefined, msgEvent: message, problem: undefined };
+      for await (const messages of stream) {
+        for (const message of messages) {
+          yield { connectionId: undefined, msgEvent: message, problem: undefined };
+        }
       }
+
+      return;
+    }
+
+    let localStart = streamStart;
+    let localEnd = clampTime(addTime(localStart, { sec: 5, nsec: 0 }), streamStart, streamEnd);
+    for (;;) {
+      const stream = streamMessages({
+        api,
+        parsedChannelsByTopic,
+        params: {
+          ...(deviceId ? { deviceId } : { importId: importId! }),
+          start: localStart,
+          end: localEnd,
+          topics: args.topics,
+        },
+      });
+
+      for await (const messages of stream) {
+        for (const message of messages) {
+          yield { connectionId: undefined, msgEvent: message, problem: undefined };
+        }
+      }
+
+      if (compare(localEnd, streamEnd) >= 0) {
+        return;
+      }
+
+      localStart = addTime(localEnd, { sec: 0, nsec: 1 });
+
+      // Assumes coverage regions are sorted by start time
+      for (const coverage of this._coverage) {
+        const end = fromRFC3339String(coverage.end);
+        const start = fromRFC3339String(coverage.start);
+        if (!start || !end) {
+          continue;
+        }
+
+        // if localStart is in a coverage region, then allow this localStart to be used
+        if (compare(localStart, start) >= 0 && compare(localStart, end) <= 0) {
+          break;
+        }
+
+        // if localStart is completely before a coverage region then we reset the localStart to the
+        // start of the coverage region. Since coverage regions are sorted by start time, if we get
+        // here we know that localStart did not fall into a previous coverage region
+        if (compare(localStart, end) <= 0 && compare(localStart, start) < 0) {
+          localStart = start;
+          log.debug("start is in a coverage gap, adjusting start to next coverage range", start);
+          break;
+        }
+      }
+
+      localStart = clampTime(localStart, streamStart, streamEnd);
+      localEnd = clampTime(addTime(localStart, { sec: 5, nsec: 0 }), streamStart, streamEnd);
     }
   }
 
@@ -223,13 +320,18 @@ export class DataPlatformIterableSource implements IIterableSource {
       return [];
     }
 
+    if (!this._deviceId && !this._importId) {
+      log.debug("source needs to be initialized");
+      return [];
+    }
+
     const messages: MessageEvent<unknown>[] = [];
     for await (const block of streamMessages({
       api: this._consoleApi,
       parsedChannelsByTopic: this._parsedChannelsByTopic,
       signal: abortSignal,
       params: {
-        deviceId: this._deviceId,
+        ...(this._deviceId ? { deviceId: this._deviceId } : { importId: this._importId! }),
         start: time,
         end: time,
         topics,

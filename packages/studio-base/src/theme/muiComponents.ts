@@ -90,6 +90,19 @@ export default function muiComponents(theme: Theme): ThemeOptions["components"] 
         },
       },
     },
+    MuiFab: {
+      defaultProps: {
+        color: "inherit",
+      },
+      styleOverrides: {
+        root: {
+          boxShadow: theme.shadows[2],
+        },
+        colorInherit: {
+          backgroundColor: theme.palette.background.paper,
+        },
+      },
+    },
     MuiFormControl: {
       defaultProps: {
         variant: "standard",
@@ -109,6 +122,9 @@ export default function muiComponents(theme: Theme): ThemeOptions["components"] 
         disableElevation: true,
       },
       styleOverrides: {
+        root: {
+          ...disableBackgroundColorTransition,
+        },
         containedInherit: {
           backgroundColor: theme.palette.action.focus,
         },
@@ -128,6 +144,11 @@ export default function muiComponents(theme: Theme): ThemeOptions["components"] 
     MuiCardActionArea: {
       defaultProps: {
         disableRipple: true,
+      },
+      styleOverrides: {
+        focusHighlight: {
+          ...disableBackgroundColorTransition,
+        },
       },
     },
     MuiCardContent: {
@@ -499,7 +520,11 @@ export default function muiComponents(theme: Theme): ThemeOptions["components"] 
         arrow: true,
       },
       styleOverrides: {
+        arrow: {
+          color: theme.palette.grey[700],
+        },
         tooltip: {
+          backgroundColor: theme.palette.grey[700],
           fontWeight: "normal",
           fontSize: "0.75rem",
         },

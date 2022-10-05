@@ -76,7 +76,13 @@ describe("PanelExtensionAdapter", () => {
     const config = {};
     const saveConfig = () => {};
 
-    const message = { topic: "x", receiveTime: { sec: 0, nsec: 1 }, sizeInBytes: 0, message: 42 };
+    const message = {
+      topic: "x",
+      receiveTime: { sec: 0, nsec: 1 },
+      sizeInBytes: 0,
+      message: 42,
+      datatype: "foo",
+    };
 
     const Wrapper = ({ lastSeekTime }: { lastSeekTime?: number }) => {
       return (
@@ -645,5 +651,49 @@ describe("PanelExtensionAdapter", () => {
     ]);
 
     mockRAF.mockRestore();
+  });
+
+  it("ignores subscriptions after panel unmount", async () => {
+    const sig = signal();
+    const initPanel = jest.fn((context: PanelExtensionContext) => {
+      context.watch("currentFrame");
+      context.subscribe(["x"]);
+      setTimeout(() => {
+        context.subscribe(["y"]);
+        sig.resolve();
+      }, 10);
+    });
+
+    const config = {};
+    const saveConfig = () => {};
+
+    const mockSetSubscriptions = jest.fn();
+
+    const { unmount } = render(
+      <ThemeProvider isDark>
+        <MockPanelContextProvider>
+          <PanelSetup fixture={{ setSubscriptions: mockSetSubscriptions }}>
+            <PanelExtensionAdapter config={config} saveConfig={saveConfig} initPanel={initPanel} />
+          </PanelSetup>
+        </MockPanelContextProvider>
+      </ThemeProvider>,
+    );
+
+    expect(initPanel).toHaveBeenCalled();
+
+    expect(mockSetSubscriptions.mock.calls).toEqual([
+      [expect.any(String), [{ preloadType: "full", topic: "x" }]],
+    ]);
+    unmount();
+    expect(mockSetSubscriptions.mock.calls).toEqual([
+      [expect.any(String), [{ preloadType: "full", topic: "x" }]],
+      [expect.any(String), []],
+    ]);
+    await act(async () => await sig);
+    unmount();
+    expect(mockSetSubscriptions.mock.calls).toEqual([
+      [expect.any(String), [{ preloadType: "full", topic: "x" }]],
+      [expect.any(String), []],
+    ]);
   });
 });
