@@ -1,7 +1,6 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
-import { spawn } from "child_process";
 import {
   app,
   dialog,
@@ -30,7 +29,7 @@ const rendererPath = MAIN_WINDOW_WEBPACK_ENTRY;
 const closeMenuItem: MenuItemConstructorOptions = isMac ? { role: "close" } : { role: "quit" };
 const log = Logger.getLogger(__filename);
 
-spawn("rviz2");
+// spawn("rviz2");
 
 type SectionKey = "app" | "panels" | "resources" | "products" | "contact" | "legal";
 type HelpInfo = {
