@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { CompressedImage, FrameTransform, RawImage } from "@foxglove/schemas";
-import { MessageEvent, Topic } from "@foxglove/studio";
+import { MessageEvent } from "@foxglove/studio";
+import { Topic } from "@foxglove/studio-base/players/types";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 import ThreeDeeRender from "../index";
@@ -26,11 +27,11 @@ export default {
 ImageRender.parameters = { colorScheme: "light" };
 export function ImageRender(): JSX.Element {
   const topics: Topic[] = [
-    { name: "/tf", datatype: "geometry_msgs/TransformStamped" },
-    { name: "/cam1/info", datatype: "sensor_msgs/CameraInfo" },
-    { name: "/cam2/info", datatype: "sensor_msgs/CameraInfo" },
-    { name: "/cam1/png", datatype: "sensor_msgs/CompressedImage" },
-    { name: "/cam2/raw", datatype: "sensor_msgs/Image" },
+    { name: "/tf", schemaName: "geometry_msgs/TransformStamped" },
+    { name: "/cam1/info", schemaName: "sensor_msgs/CameraInfo" },
+    { name: "/cam2/info", schemaName: "sensor_msgs/CameraInfo" },
+    { name: "/cam1/png", schemaName: "sensor_msgs/CompressedImage" },
+    { name: "/cam2/raw", schemaName: "sensor_msgs/Image" },
   ];
 
   const tf1: MessageEvent<TransformStamped> = {
@@ -44,7 +45,7 @@ export function ImageRender(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -58,7 +59,7 @@ export function ImageRender(): JSX.Element {
         rotation: { x: 0.383, y: 0, z: 0, w: 0.924 },
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -81,7 +82,7 @@ export function ImageRender(): JSX.Element {
         233.90321350097656, -0.00011014656047336757, 0, 0, 1, 0.000024338871298823506,
       ],
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
@@ -103,7 +104,7 @@ export function ImageRender(): JSX.Element {
         0, 1, 0,
       ],
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
@@ -115,7 +116,7 @@ export function ImageRender(): JSX.Element {
       format: "png",
       data: PNG_TEST_IMAGE,
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
@@ -144,7 +145,7 @@ export function ImageRender(): JSX.Element {
       step: SIZE * 4,
       data: rgba8,
     },
-    datatype: "sensor_msgs/Image",
+    schemaName: "sensor_msgs/Image",
     sizeInBytes: 0,
   };
 
@@ -215,11 +216,11 @@ export function ImageRender(): JSX.Element {
 FoxgloveImageRender.parameters = { colorScheme: "light" };
 export function FoxgloveImageRender(): JSX.Element {
   const topics: Topic[] = [
-    { name: "/tf", datatype: "foxglove.FrameTransform" },
-    { name: "/cam1/info", datatype: "foxglove.CameraCalibration" },
-    { name: "/cam2/info", datatype: "foxglove.CameraCalibration" },
-    { name: "/cam1/png", datatype: "foxglove.CompressedImage" },
-    { name: "/cam2/raw", datatype: "foxglove.RawImage" },
+    { name: "/tf", schemaName: "foxglove.FrameTransform" },
+    { name: "/cam1/info", schemaName: "foxglove.CameraCalibration" },
+    { name: "/cam2/info", schemaName: "foxglove.CameraCalibration" },
+    { name: "/cam1/png", schemaName: "foxglove.CompressedImage" },
+    { name: "/cam2/raw", schemaName: "foxglove.RawImage" },
   ];
 
   const tf1: MessageEvent<FrameTransform> = {
@@ -232,7 +233,7 @@ export function FoxgloveImageRender(): JSX.Element {
       translation: { x: 1e7, y: 0, z: 0 },
       rotation: QUAT_IDENTITY,
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<FrameTransform> = {
@@ -245,7 +246,7 @@ export function FoxgloveImageRender(): JSX.Element {
       translation: { x: 0, y: 0, z: 1 },
       rotation: { x: 0.383, y: 0, z: 0, w: 0.924 },
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
 
@@ -268,7 +269,7 @@ export function FoxgloveImageRender(): JSX.Element {
         233.90321350097656, -0.00011014656047336757, 0, 0, 1, 0.000024338871298823506,
       ],
     },
-    datatype: "foxglove.CameraCalibration",
+    schemaName: "foxglove.CameraCalibration",
     sizeInBytes: 0,
   };
 
@@ -290,7 +291,7 @@ export function FoxgloveImageRender(): JSX.Element {
         0, 1, 0,
       ],
     },
-    datatype: "foxglove.CameraCalibration",
+    schemaName: "foxglove.CameraCalibration",
     sizeInBytes: 0,
   };
 
@@ -303,7 +304,7 @@ export function FoxgloveImageRender(): JSX.Element {
       format: "png",
       data: PNG_TEST_IMAGE,
     },
-    datatype: "foxglove.CompressedImage",
+    schemaName: "foxglove.CompressedImage",
     sizeInBytes: 0,
   };
 
@@ -332,7 +333,7 @@ export function FoxgloveImageRender(): JSX.Element {
       step: SIZE * 4,
       data: rgba8,
     },
-    datatype: "sensor_msgs/Image",
+    schemaName: "sensor_msgs/Image",
     sizeInBytes: 0,
   };
 

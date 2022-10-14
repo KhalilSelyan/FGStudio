@@ -77,14 +77,14 @@ export function JointPositionFromTopic(): JSX.Element {
       velocity: [0],
       effort: [0],
     },
-    datatype: "sensor_msgs/JointState",
+    schemaName: "sensor_msgs/JointState",
     sizeInBytes: 0,
   };
   return (
     <ExampleAssetsProvider>
       <PanelSetup
         fixture={{
-          topics: [{ name: "/joint_states", datatype: "sensor_msgs/JointState" }],
+          topics: [{ name: "/joint_states", schemaName: "sensor_msgs/JointState" }],
           frame: { "/joint_states": [jointStates] },
         }}
       >

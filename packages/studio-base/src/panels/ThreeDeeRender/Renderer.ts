@@ -22,12 +22,13 @@ import {
   Topic,
   VariableValue,
 } from "@foxglove/studio";
+import { FoxgloveGrid } from "@foxglove/studio-base/panels/ThreeDeeRender/renderables/FoxgloveGrid";
 import { fonts } from "@foxglove/studio-base/util/sharedStyleConstants";
 import { LabelMaterial, LabelPool } from "@foxglove/three-text";
 
 import { Input } from "./Input";
 import { LineMaterial } from "./LineMaterial";
-import { ModelCache } from "./ModelCache";
+import { ModelCache, MeshUpAxis, DEFAULT_MESH_UP_AXIS } from "./ModelCache";
 import { PickedRenderable, Picker } from "./Picker";
 import type { Renderable } from "./Renderable";
 import { SceneExtension } from "./SceneExtension";
@@ -57,6 +58,7 @@ import { Poses } from "./renderables/Poses";
 import { PublishClickTool, PublishClickType } from "./renderables/PublishClickTool";
 import { FoxgloveSceneEntities } from "./renderables/SceneEntities";
 import { Urdfs } from "./renderables/Urdfs";
+import { VelodyneScans } from "./renderables/VelodyneScans";
 import { MarkerPool } from "./renderables/markers/MarkerPool";
 import {
   Header,
@@ -116,6 +118,7 @@ export type RendererConfig = {
     labelScaleFactor?: number;
     /** Ignore the <up_axis> tag in COLLADA files (matching rviz behavior) */
     ignoreColladaUpAxis?: boolean;
+    meshUpAxis?: MeshUpAxis;
     transforms?: {
       /** Toggles translation and rotation offset controls for frames */
       editable?: boolean;
@@ -367,6 +370,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
 
     this.modelCache = new ModelCache({
       ignoreColladaUpAxis: config.scene.ignoreColladaUpAxis ?? false,
+      meshUpAxis: config.scene.meshUpAxis ?? DEFAULT_MESH_UP_AXIS,
       edgeMaterial: this.outlineMaterial,
     });
 
@@ -460,8 +464,10 @@ export class Renderer extends EventEmitter<RendererEvents> {
     this.addSceneExtension(new Images(this));
     this.addSceneExtension(new Markers(this));
     this.addSceneExtension(new FoxgloveSceneEntities(this));
+    this.addSceneExtension(new FoxgloveGrid(this));
     this.addSceneExtension(new OccupancyGrids(this));
     this.addSceneExtension(new PointCloudsAndLaserScans(this));
+    this.addSceneExtension(new VelodyneScans(this));
     this.addSceneExtension(new Polygons(this));
     this.addSceneExtension(new Poses(this));
     this.addSceneExtension(new PoseArrays(this));

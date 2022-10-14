@@ -114,15 +114,7 @@ export default class Ros1Player implements Player {
     };
     const tcpServer = await net.createServer();
 
-    // Mirror the ros_comm c++ library behavior when setting up the tcp server listener.
-    // ros_comm listens on all interfaces unless the hostname is explicity set to 'localhost'
-    // https://github.com/ros/ros_comm/blob/noetic-devel/clients/roscpp/src/libros/transport/transport_tcp.cpp#L393-L395
-    // https://github.com/ros/ros_comm/blob/f5fa3a168760d62e9693f10dcb9adfffc6132d22/clients/roscpp/src/libros/transport/transport.cpp#L67-L72
-    let listenHostname = undefined;
-    if (hostname === "localhost") {
-      listenHostname = "localhost";
-    }
-    await tcpServer.listen(undefined, listenHostname, 10);
+    await tcpServer.listen(undefined, hostname, 10);
 
     if (this._rosNode == undefined) {
       const rosNode = new RosNode({
@@ -213,7 +205,7 @@ export default class Ros1Player implements Player {
 
     try {
       const topicArrays = await rosNode.getPublishedTopics();
-      const topics: Topic[] = topicArrays.map(([name, datatype]) => ({ name, datatype }));
+      const topics: Topic[] = topicArrays.map(([name, schemaName]) => ({ name, schemaName }));
       // Sort them for easy comparison
       const sortedTopics = sortBy(topics, "name");
 
@@ -392,17 +384,17 @@ export default class Ros1Player implements Player {
         continue;
       }
 
-      const { datatype } = availTopic;
-      const subscription = this._rosNode.subscribe({ topic: topicName, dataType: datatype });
+      const { schemaName } = availTopic;
+      const subscription = this._rosNode.subscribe({ topic: topicName, dataType: schemaName });
 
       subscription.on("header", (_header, msgdef, _reader) => {
         // We have to create a new object instead of just updating _providerDatatypes to support
         // shallow memo downstream.
-        const newDatatypes = this._getRosDatatypes(datatype, msgdef);
+        const newDatatypes = this._getRosDatatypes(schemaName, msgdef);
         this._providerDatatypes = new Map([...this._providerDatatypes, ...newDatatypes]);
       });
       subscription.on("message", (message, data, _pub) => {
-        this._handleMessage(topicName, message, data.byteLength, datatype, true);
+        this._handleMessage(topicName, message, data.byteLength, schemaName, true);
         // Clear any existing subscription problems for this topic if we're receiving messages again.
         this._clearProblem(`subscribe:${topicName}`, { skipEmit: true });
       });
@@ -431,7 +423,7 @@ export default class Ros1Player implements Player {
     topic: string,
     message: unknown,
     sizeInBytes: number,
-    datatype: string,
+    schemaName: string,
     // This is a hot path so we avoid extra object allocation from a parameters struct
     // eslint-disable-next-line @foxglove/no-boolean-parameters
     external: boolean,
@@ -447,7 +439,13 @@ export default class Ros1Player implements Player {
       this._metricsCollector.recordTimeToFirstMsgs();
     }
 
-    const msg: MessageEvent<unknown> = { topic, receiveTime, message, sizeInBytes, datatype };
+    const msg: MessageEvent<unknown> = {
+      topic,
+      receiveTime,
+      message,
+      sizeInBytes,
+      schemaName,
+    };
     this._parsedMessages.push(msg);
     this._handleInternalMessage(msg);
 
@@ -491,7 +489,7 @@ export default class Ros1Player implements Player {
     }
 
     // Unadvertise any topics where the dataType changed
-    for (const { topic, datatype } of validPublishers) {
+    for (const { topic, schemaName: datatype } of validPublishers) {
       const existingPub = this._rosNode.publications.get(topic);
       if (existingPub != undefined && existingPub.dataType !== datatype) {
         this._rosNode.unadvertise(topic);
@@ -500,7 +498,7 @@ export default class Ros1Player implements Player {
 
     // Advertise new topics
     for (const advertiseOptions of validPublishers) {
-      const { topic, datatype: dataType, options } = advertiseOptions;
+      const { topic, schemaName: dataType, options } = advertiseOptions;
 
       if (this._rosNode.publications.has(topic)) {
         continue;

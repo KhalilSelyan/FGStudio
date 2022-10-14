@@ -6,8 +6,9 @@ import * as THREE from "three";
 
 import { fromSec } from "@foxglove/rostime";
 import { FrameTransform, LaserScan, PointCloud } from "@foxglove/schemas";
-import { MessageEvent, Topic } from "@foxglove/studio";
+import { MessageEvent } from "@foxglove/studio";
 import { xyzrpyToPose } from "@foxglove/studio-base/panels/ThreeDeeRender/transforms";
+import { Topic } from "@foxglove/studio-base/players/types";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 import { emptyPose } from "@foxglove/studio-base/util/Pose";
 
@@ -33,8 +34,8 @@ function Foxglove_LaserScan({
   settings: Record<string, unknown>;
 }): JSX.Element {
   const topics: Topic[] = [
-    { name: "/scan", datatype: "foxglove.LaserScan" },
-    { name: "/tf", datatype: "foxglove.FrameTransform" },
+    { name: "/scan", schemaName: "foxglove.LaserScan" },
+    { name: "/tf", schemaName: "foxglove.FrameTransform" },
   ];
   const tf1: MessageEvent<FrameTransform> = {
     topic: "/tf",
@@ -46,7 +47,7 @@ function Foxglove_LaserScan({
       translation: { x: 1e7, y: 0, z: 0 },
       rotation: QUAT_IDENTITY,
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<FrameTransform> = {
@@ -59,7 +60,7 @@ function Foxglove_LaserScan({
       translation: { x: 0, y: 0, z: 1 },
       rotation: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2),
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
   const tf3: MessageEvent<FrameTransform> = {
@@ -72,7 +73,7 @@ function Foxglove_LaserScan({
       translation: { x: 0, y: 5, z: 1 },
       rotation: QUAT_IDENTITY,
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
 
@@ -101,7 +102,7 @@ function Foxglove_LaserScan({
       ranges: ranges as unknown as number[],
       intensities: intensities as unknown as number[],
     },
-    datatype: "foxglove.LaserScan",
+    schemaName: "foxglove.LaserScan",
     sizeInBytes: 0,
   };
 
@@ -215,9 +216,9 @@ export const Time10 = Object.assign(Foxglove_LaserScan.bind({}), {
 
 export function ComparisonWithPointCloudColors(): JSX.Element {
   const topics: Topic[] = [
-    { name: "/scan", datatype: "foxglove.LaserScan" },
-    { name: "/cloud", datatype: "foxglove.PointCloud" },
-    { name: "/tf", datatype: "foxglove.FrameTransform" },
+    { name: "/scan", schemaName: "foxglove.LaserScan" },
+    { name: "/cloud", schemaName: "foxglove.PointCloud" },
+    { name: "/tf", schemaName: "foxglove.FrameTransform" },
   ];
   const tf1: MessageEvent<FrameTransform> = {
     topic: "/tf",
@@ -229,7 +230,7 @@ export function ComparisonWithPointCloudColors(): JSX.Element {
       translation: { x: 1e7, y: 0, z: 0 },
       rotation: QUAT_IDENTITY,
     },
-    datatype: "foxglove.FrameTransform",
+    schemaName: "foxglove.FrameTransform",
     sizeInBytes: 0,
   };
 
@@ -263,7 +264,7 @@ export function ComparisonWithPointCloudColors(): JSX.Element {
       ranges: ranges as unknown as number[],
       intensities: intensities as unknown as number[],
     },
-    datatype: "foxglove.LaserScan",
+    schemaName: "foxglove.LaserScan",
     sizeInBytes: 0,
   };
 
@@ -287,7 +288,7 @@ export function ComparisonWithPointCloudColors(): JSX.Element {
         pointCloudData.byteLength,
       ),
     },
-    datatype: "foxglove.PointCloud",
+    schemaName: "foxglove.PointCloud",
     sizeInBytes: 0,
   };
 

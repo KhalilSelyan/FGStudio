@@ -4,7 +4,8 @@
 
 import { quat } from "gl-matrix";
 
-import { MessageEvent, Topic } from "@foxglove/studio";
+import { MessageEvent } from "@foxglove/studio";
+import { Topic } from "@foxglove/studio-base/players/types";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 import ThreeDeeRender from "../index";
@@ -20,9 +21,9 @@ export default {
 NavMsgs_Path.parameters = { colorScheme: "dark" };
 export function NavMsgs_Path(): JSX.Element {
   const topics: Topic[] = [
-    { name: "/baselink_path", datatype: "nav_msgs/Path" },
-    { name: "/sensor_path", datatype: "nav_msgs/Path" },
-    { name: "/tf", datatype: "geometry_msgs/TransformStamped" },
+    { name: "/baselink_path", schemaName: "nav_msgs/Path" },
+    { name: "/sensor_path", schemaName: "nav_msgs/Path" },
+    { name: "/tf", schemaName: "geometry_msgs/TransformStamped" },
   ];
   const tf1: MessageEvent<TransformStamped> = {
     topic: "/tf",
@@ -35,7 +36,7 @@ export function NavMsgs_Path(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -49,7 +50,7 @@ export function NavMsgs_Path(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf3: MessageEvent<TransformStamped> = {
@@ -63,7 +64,7 @@ export function NavMsgs_Path(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -88,7 +89,7 @@ export function NavMsgs_Path(): JSX.Element {
         pose: { position: { x: i - 5, y: 0, z: 0 }, orientation: makeOrientation(i) },
       })),
     },
-    datatype: "nav_msgs/Path",
+    schemaName: "nav_msgs/Path",
     sizeInBytes: 0,
   };
 
@@ -102,7 +103,7 @@ export function NavMsgs_Path(): JSX.Element {
         pose: { position: { x: i - 5, y: 0, z: i % 2 }, orientation: makeOrientation(i) },
       })),
     },
-    datatype: "nav_msgs/Path",
+    schemaName: "nav_msgs/Path",
     sizeInBytes: 0,
   };
 

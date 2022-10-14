@@ -119,6 +119,11 @@ const useStyles = makeStyles()((theme) => ({
   nodeHeaderToggleVisible: {
     opacity: 1,
   },
+  errorTooltip: {
+    whiteSpace: "pre-line",
+    maxHeight: "15vh",
+    overflowY: "auto",
+  },
 }));
 
 function ExpansionArrow({ expanded }: { expanded: boolean }): JSX.Element {
@@ -191,7 +196,8 @@ function NodeEditorComponent(props: NodeEditorProps): JSX.Element {
   };
 
   const { fields, children } = settings;
-  const hasProperties = fields != undefined || children != undefined;
+  const hasChildren = children != undefined && Object.keys(children).length > 0;
+  const hasProperties = fields != undefined || hasChildren;
 
   const fieldEditors = filterMap(Object.entries(fields ?? {}), ([key, field]) => {
     return field ? (
@@ -350,7 +356,11 @@ function NodeEditorComponent(props: NodeEditorProps): JSX.Element {
           {props.settings?.error && (
             <Tooltip
               arrow
-              title={<Typography variant="subtitle2">{props.settings.error}</Typography>}
+              title={
+                <Typography variant="subtitle2" className={classes.errorTooltip}>
+                  {props.settings.error}
+                </Typography>
+              }
             >
               <IconButton size="small" color="error">
                 <ErrorIcon fontSize="small" />
@@ -369,7 +379,7 @@ function NodeEditorComponent(props: NodeEditorProps): JSX.Element {
           <div className={classes.fieldPadding} />
         </>
       )}
-      {state.open && selectVisibilityFilterEnabled && (
+      {state.open && selectVisibilityFilterEnabled && hasChildren && (
         <FieldEditor
           key="visibilityFilter"
           field={{ ...SelectVisibilityFilterField, value: state.visibilityFilter }}

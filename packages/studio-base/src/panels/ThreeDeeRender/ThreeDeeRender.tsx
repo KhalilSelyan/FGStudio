@@ -518,7 +518,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       return map;
     }
     for (const topic of topics) {
-      map.set(topic.name, topic.datatype);
+      map.set(topic.name, topic.schemaName);
     }
     return map;
   }, [topics]);
@@ -680,7 +680,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       for (const rendererSubscription of topicHandlers.get(topic.name) ?? []) {
         updateSubscriptions(topic.name, rendererSubscription);
       }
-      for (const rendererSubscription of datatypeHandlers.get(topic.datatype) ?? []) {
+      for (const rendererSubscription of datatypeHandlers.get(topic.schemaName) ?? []) {
         updateSubscriptions(topic.name, rendererSubscription);
       }
     }

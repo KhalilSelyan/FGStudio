@@ -454,7 +454,8 @@ export class IterablePlayer implements Player {
         if (existingTopic) {
           problems.push({
             severity: "warn",
-            message: `Duplicate topic: ${topic.name}`,
+            message: `Inconsistent datatype for topic: ${topic.name}`,
+            tip: `Topic ${topic.name} has messages with multiple datatypes: ${existingTopic.schemaName}, ${topic.schemaName}. This may result in errors during visualization.`,
           });
           continue;
         }
@@ -957,6 +958,7 @@ export class IterablePlayer implements Player {
     await this._bufferedSource.stopProducer();
     await this._playbackIterator?.return?.();
     this._playbackIterator = undefined;
+    await this._iterableSource.terminate?.();
   }
 
   private async startBlockLoading() {

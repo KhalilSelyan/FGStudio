@@ -2,7 +2,8 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { MessageEvent, Topic } from "@foxglove/studio";
+import { MessageEvent } from "@foxglove/studio";
+import { Topic } from "@foxglove/studio-base/players/types";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 import ThreeDeeRender from "../index";
@@ -24,10 +25,10 @@ export default {
 CameraInfoRender.parameters = { colorScheme: "dark" };
 export function CameraInfoRender(): JSX.Element {
   const topics: Topic[] = [
-    { name: "/tf", datatype: "geometry_msgs/TransformStamped" },
-    { name: "/rational_polynomial", datatype: "sensor_msgs/CameraInfo" },
-    { name: "/none", datatype: "sensor_msgs/CameraInfo" },
-    { name: "/empty", datatype: "sensor_msgs/CameraInfo" },
+    { name: "/tf", schemaName: "geometry_msgs/TransformStamped" },
+    { name: "/rational_polynomial", schemaName: "sensor_msgs/CameraInfo" },
+    { name: "/none", schemaName: "sensor_msgs/CameraInfo" },
+    { name: "/empty", schemaName: "sensor_msgs/CameraInfo" },
   ];
 
   const tf1: MessageEvent<TransformStamped> = {
@@ -41,7 +42,7 @@ export function CameraInfoRender(): JSX.Element {
         rotation: QUAT_IDENTITY,
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
   const tf2: MessageEvent<TransformStamped> = {
@@ -55,7 +56,7 @@ export function CameraInfoRender(): JSX.Element {
         rotation: { x: 0.383, y: 0, z: 0, w: 0.924 },
       },
     },
-    datatype: "geometry_msgs/TransformStamped",
+    schemaName: "geometry_msgs/TransformStamped",
     sizeInBytes: 0,
   };
 
@@ -78,7 +79,7 @@ export function CameraInfoRender(): JSX.Element {
         233.90321350097656, -0.00011014656047336757, 0, 0, 1, 0.000024338871298823506,
       ],
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
@@ -100,7 +101,7 @@ export function CameraInfoRender(): JSX.Element {
         0, 1, 0,
       ],
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
@@ -112,7 +113,7 @@ export function CameraInfoRender(): JSX.Element {
       height: 1080,
       width: 1920,
     },
-    datatype: "sensor_msgs/CameraInfo",
+    schemaName: "sensor_msgs/CameraInfo",
     sizeInBytes: 0,
   };
 
